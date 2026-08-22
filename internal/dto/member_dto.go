@@ -17,14 +17,14 @@
 package dto
 
 type CreateMemberDto struct {
-	ProjectId  string   `json:"project_id" binding:"required"`
-	UserId     string   `json:"user_id" binding:"required"`
+	ProjectID  string   `json:"project_id" binding:"required"`
+	UserID     string   `json:"user_id" binding:"required"`
 	Role       string   `json:"role" binding:"required"`
 	Directions []string `json:"directions" binding:"required"`
 }
 
 type MemberDto struct {
-	UserId     string   `json:"user_id" binding:"required"`
+	UserID     string   `json:"user_id" binding:"required"`
 	Role       string   `json:"role" binding:"required"`
 	Directions []string `json:"directions" binding:"required"`
 }

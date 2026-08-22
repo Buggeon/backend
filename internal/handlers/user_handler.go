@@ -19,6 +19,7 @@ package handlers
 import (
 	"bugtracker/internal/dto"
 	"bugtracker/internal/services"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,9 +40,19 @@ func (h *UserHandler) Registration(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.Status(403)
+		c.Abort()
+		return
 	}
 
-	h.userService.Registration(&dto)
+	tokenPair, err := h.userService.Register(&dto)
+
+	if err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	c.JSON(200, tokenPair)
 
 }
 
@@ -51,14 +62,41 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.Status(403)
+		c.Abort()
+		return
 	}
 
 	response, err := h.userService.Login(&dto)
 
 	if err != nil {
+
+		fmt.Println(err)
+
 		c.Status(401)
 	} else {
 		c.JSON(200, response)
 	}
 
+}
+
+func (h *UserHandler) RefreshAccessToken(c *gin.Context) {
+
+	var dto dto.RefreshAccessTokenDto
+
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	accessToken, err := h.userService.RefreshAccessToken(dto.RefreshToken)
+
+	if err != nil {
+
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	c.JSON(200, gin.H{"access_token": accessToken})
 }

@@ -23,13 +23,13 @@ import (
 )
 
 type Card struct {
-	ID          primitive.ObjectID   `bson:"_id,omitempty" json:"id"`
-	Title       string               `bson:"title" json:"title"`
-	Description string               `bson:"description" json:"description"`
-	Content     string               `bson:"content" json:"content"`
-	Assignees   []primitive.ObjectID `bson:"assignees" json:"assignees"`
-	BoardID     primitive.ObjectID   `bson:"board_id" json:"board_id"`
-	Priority    int                  `bson:"priority" json:"priority"`
-	CreatedAt   time.Time            `bson:"created_at" json:"created_at"`
-	UpdatedAt   time.Time            `bson:"updated_at" json:"updated_at"`
+	ID        primitive.ObjectID   `bson:"_id,omitempty" json:"id"`
+	Title     string               `bson:"title" json:"title"`
+	Content   string               `bson:"content" json:"content"`
+	Assignees []primitive.ObjectID `bson:"assignees" json:"assignees"`
+	BoardID   primitive.ObjectID   `bson:"board_id" json:"board_id"`
+	Priority  int                  `bson:"priority" json:"priority"`
+	CreatedAt time.Time            `bson:"created_at" json:"created_at"`
+	Messages  []primitive.ObjectID `bson:"messages" json:"messages"`
+	UpdatedAt time.Time            `bson:"updated_at" json:"updated_at"`
 }

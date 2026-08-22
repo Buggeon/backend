@@ -24,7 +24,7 @@ import (
 
 type Member struct {
 	ID         primitive.ObjectID `bson:"_id" json:"id"`
-	UserId     primitive.ObjectID `bson:"user_id" json:"user_id"`
+	UserID     primitive.ObjectID `bson:"user_id" json:"user_id"`
 	Role       string             `bson:"role" json:"role"`
 	ProjectID  primitive.ObjectID `bson:"project_id" json:"project_id"`
 	Directions []string           `bson:"directions" json:"directions"`

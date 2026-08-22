@@ -26,8 +26,9 @@ type Project struct {
 	ID          primitive.ObjectID `bson:"_id" json:"id"`
 	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
-	OwnerId     primitive.ObjectID `bson:"owner_id" json:"owner_id"`
+	LeadID      primitive.ObjectID `bson:"lead_id" json:"lead_id"`
 	Name        string             `bson:"name" json:"name"`
 	Description string             `bson:"description" json:"description"`
 	LogoUrl     string             `bson:"logo_url" json:"logo_url"`
+	Progress    int                `bson:"progress" json:"progress"`
 }

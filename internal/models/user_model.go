@@ -23,10 +23,12 @@ import (
 )
 
 type User struct {
-	ID        primitive.ObjectID `bson:"_id" json:"id"`
-	Name      string             `bson:"name" json:"name"`
-	Login     string             `bson:"login" json:"login"`
-	Password  string             `bson:"password" json:"-"`
-	Email     string             `bson:"email" json:"email"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	ID           primitive.ObjectID `bson:"_id" json:"id"`
+	Name         string             `bson:"name" json:"name"`
+	Login        string             `bson:"login" json:"login"`
+	Password     string             `bson:"password" json:"-"`
+	Email        string             `bson:"email" json:"email"`
+	RefreshToken string             `bson:"refresh_token" json:"-"`
+	Role         string             `bson:"role" json:"-"`
+	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
 }

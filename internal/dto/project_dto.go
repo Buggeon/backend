@@ -17,14 +17,10 @@
 package dto
 
 type CreateProjectDto struct {
-	UserId      string      `json:"user_id" binding:"required"`
+	LeadID      string      `json:"lead_id" binding:"required"`
 	Name        string      `json:"name" binding:"required"`
 	Description string      `json:"description"`
 	Members     []MemberDto `json:"members"`
-}
-
-type GetProjectsDto struct {
-	Amount int `json:"amount"`
 }
 
 type GetProjectDto struct {

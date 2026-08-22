@@ -16,22 +16,9 @@
 
 package dto
 
-type CreateCardDto struct {
-	Title     string   `json:"title" binding:"required"`
-	Content   string   `json:"content" binding:"required"`
-	Assignees []string `json:"assignees" binding:"required"`
-	BoardID   string   `json:"board_id"`
-	Priority  int      `json:"priority" binding:"required"`
-}
-
-type GetCard struct {
-	CardID string `json:"card_id"  binding:"required"`
-}
-
-type GetCards struct {
-	BoardID string `json:"board_id" binding:"required"`
-}
-
-type DeleteCard struct {
-	CardID string `json:"card_id" binding:"required"`
+type NewMessageDto struct {
+	SenderID string `json:"sender_id"`
+	CardID   string `json:"card_id"`
+	ReplyTo  string `json:"reply_to"`
+	Content  string `json:"content" binding:"required"`
 }

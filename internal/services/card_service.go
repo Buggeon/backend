@@ -35,7 +35,7 @@ func NewCardService(cardRepo *repositories.CardRepo) *CardService {
 	}
 }
 
-func (b *CardService) CreateCard(dto *dto.CreateCardDto) error {
+func (c *CardService) CreateCard(dto *dto.CreateCardDto) error {
 
 	boardID, err := primitive.ObjectIDFromHex(dto.BoardID)
 	var assigneeIDs []primitive.ObjectID
@@ -55,39 +55,55 @@ func (b *CardService) CreateCard(dto *dto.CreateCardDto) error {
 	}
 
 	card := &models.Card{
-		Title:       dto.Title,
-		Description: dto.Description,
-		Content:     dto.Content,
-		Assignees:   assigneeIDs,
-		BoardID:     boardID,
-		Priority:    dto.Priority,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		Title:     dto.Title,
+		Content:   dto.Content,
+		Assignees: assigneeIDs,
+		BoardID:   boardID,
+		Priority:  dto.Priority,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
-	err = b.cardRepo.CreateCard(card)
+	err = c.cardRepo.CreateCard(card)
 
 	return err
 }
 
-func (b *CardService) GetCard(boardID string) (models.Card, error) {
+func (c *CardService) GetCard(cardID string) (models.Card, error) {
 
-	objID, err := primitive.ObjectIDFromHex(boardID)
+	objID, err := primitive.ObjectIDFromHex(cardID)
 
 	if err != nil {
 		return models.Card{}, err
 	}
 
-	card, err := b.cardRepo.GetCard(objID)
+	card, err := c.cardRepo.GetCard(objID)
 
 	return card, err
 }
 
-func (b *CardService) GetCards(projectID string) ([]models.Card, error) {
+func (c *CardService) DeleteCard(cardID string) error {
 
-	objID, err := primitive.ObjectIDFromHex(projectID)
+	objID, err := primitive.ObjectIDFromHex(cardID)
 
-	cards, err := b.cardRepo.GetCards(objID)
+	if err != nil {
+		return err
+	}
+
+	err = c.cardRepo.DeleteCard(objID)
+
+	return err
+}
+
+func (c *CardService) GetCards(boardID string) ([]models.Card, error) {
+
+	objID, err := primitive.ObjectIDFromHex(boardID)
+
+	cards, err := c.cardRepo.GetCards(objID)
 
 	return cards, err
+}
+
+func (c *CardService) CloseCard() {
+
 }

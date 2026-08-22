@@ -35,30 +35,39 @@ func NewMemberService(memberRepo *repositories.MemberRepo) *MemberService {
 	}
 }
 
-func (s *MemberService) CreateMember(dto *dto.CreateMemberDto) error {
+func (s *MemberService) CreateMember(dto *dto.CreateMemberDto) (primitive.ObjectID, error) {
 
-	user_id, err := primitive.ObjectIDFromHex(dto.UserId)
+	userID, err := primitive.ObjectIDFromHex(dto.UserID)
 
 	if err != nil {
-		return err
+		return primitive.ObjectID{}, err
 	}
 
+	projectID, err := primitive.ObjectIDFromHex(dto.ProjectID)
+
+	if err != nil {
+		return primitive.ObjectID{}, err
+	}
+
+	memberID := primitive.NewObjectID()
+
 	member := &models.Member{
-		ID:         primitive.NewObjectID(),
-		UserId:     user_id,
+		ID:         memberID,
+		UserID:     userID,
 		Role:       dto.Role,
+		ProjectID:  projectID,
 		Directions: dto.Directions,
 		CreatedAt:  time.Now(),
 	}
 
 	err = s.memberRepo.CreateMember(member)
-	return err
+	return memberID, err
 
 }
 
-func (s *MemberService) GetMember(dto *dto.GetMemberDto) (models.Member, error) {
+func (s *MemberService) GetMember(memberID string) (models.Member, error) {
 
-	objID, err := primitive.ObjectIDFromHex(dto.MemberID)
+	objID, err := primitive.ObjectIDFromHex(memberID)
 
 	if err != nil {
 		return models.Member{}, err
@@ -70,9 +79,9 @@ func (s *MemberService) GetMember(dto *dto.GetMemberDto) (models.Member, error) 
 
 }
 
-func (s *MemberService) DeleteMember(dto *dto.DeleteMemberDto) error {
+func (s *MemberService) DeleteMember(memberID string) error {
 
-	objID, err := primitive.ObjectIDFromHex(dto.MemberID)
+	objID, err := primitive.ObjectIDFromHex(memberID)
 
 	if err != nil {
 		return err
@@ -84,9 +93,13 @@ func (s *MemberService) DeleteMember(dto *dto.DeleteMemberDto) error {
 
 }
 
-func (s *MemberService) GetMembers(dto *dto.GetMembersDto) ([]models.Member, error) {
+func (s *MemberService) GetMembers(projectID string) ([]models.Member, error) {
 
-	objID, err := primitive.ObjectIDFromHex(dto.ProjectID)
+	objID, err := primitive.ObjectIDFromHex(projectID)
+
+	if err != nil {
+		return nil, err
+	}
 
 	members, err := s.memberRepo.GetMembers(objID)
 

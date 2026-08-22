@@ -1,0 +1,78 @@
+type User {
+    id: ID!
+    name: String!
+    login: String!
+    email: String!
+    role: String!
+    createdAt: String!
+}
+
+type Project {
+    id: ID!
+    createdAt: String!
+    updatedAt: String!
+    name: String!
+    description: String!
+    logoUrl: String!
+    progress: Int!
+
+    lead: Member!
+    members: [Member!]!
+    boards: [Board!]!
+    cards: [Card!]!
+}
+
+type Message {
+    id: ID!
+    content: String!
+    createdAt: String!
+    updatedAt: String!
+
+    sender: Member!
+    card: Card!
+    replyTo: Message
+    replies: [Message!]!
+}
+
+type Member {
+    id: ID!
+    role: String!
+    directions: [String!]!
+    createdAt: String!
+    projectId: String!
+    user: User!
+}
+
+type Card {
+    id: ID!
+    title: String!
+    content: String!
+    priority: Int!
+    createdAt: String!
+    updatedAt: String!
+
+    board: Board!
+    assigness: [Member!]!
+    messages: [Message!]!
+}
+
+type Board {
+    id: ID!
+    name: String!
+    direction: String!
+    createdAt: String!
+    updatedAt: String!
+
+    cards: [Card!]!
+    project: Project!
+}
+
+type Query {
+    
+    project(id: ID!): Project
+    
+    # Получить все проекты
+    projects(userId: ID!): [Project!]!
+    
+    
+}

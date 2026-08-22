@@ -140,23 +140,23 @@ func (s *TokenService) RefreshAccessToken(refreshToken string, user *models.User
 
 }
 
-func (s *TokenService) GenerateTokensPair(user *models.User) (*models.TokenReponse, error) {
+func (s *TokenService) GenerateTokensPair(user *models.User) (models.TokenReponse, error) {
 
 	accessToken, err := s.GenerateAccessToken(user)
 
 	fmt.Println(err)
 
 	if err != nil {
-		return &models.TokenReponse{}, nil
+		return models.TokenReponse{}, nil
 	}
 
 	refreshToken, err := s.GenerateRefreshToken(user)
 
 	if err != nil {
-		return &models.TokenReponse{}, nil
+		return models.TokenReponse{}, nil
 	}
 
-	return &models.TokenReponse{
+	return models.TokenReponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		TokenType:    "Bearer",

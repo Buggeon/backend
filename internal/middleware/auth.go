@@ -36,8 +36,6 @@ func NewAuthMiddleware(tokenService *services.TokenService) *AuthMiddleware {
 
 func (m *AuthMiddleware) AuthRequired() gin.HandlerFunc {
 
-	fmt.Println("Welcome to the middleware")
-
 	return func(ctx *gin.Context) {
 
 		fmt.Println("You're in middleware")
@@ -46,6 +44,7 @@ func (m *AuthMiddleware) AuthRequired() gin.HandlerFunc {
 
 		if authHeader == "" {
 			ctx.Status(401)
+			fmt.Println("Empty auth header")
 			ctx.Abort()
 			return
 		}
@@ -53,6 +52,7 @@ func (m *AuthMiddleware) AuthRequired() gin.HandlerFunc {
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			ctx.Status(401)
+			fmt.Println("Incorrect auth header format")
 			ctx.Abort()
 			return
 		}
@@ -62,11 +62,12 @@ func (m *AuthMiddleware) AuthRequired() gin.HandlerFunc {
 
 		if err != nil {
 			ctx.Status(401)
+			fmt.Println("Invalid auth header")
 			ctx.Abort()
 			return
 		}
 
-		ctx.Set("user_id", claims.UserID)
+		ctx.Set("userID", claims.UserID)
 		ctx.Next()
 	}
 }

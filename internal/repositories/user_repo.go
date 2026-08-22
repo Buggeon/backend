@@ -54,6 +54,30 @@ func (r *UserRepo) GetByLogin(userLogin string) (*models.User, error) {
 	return &result, err
 }
 
+func (r *UserRepo) GetByRefreshToken(refreshToken string) (*models.User, error) {
+
+	var result models.User
+
+	err := r.collection.FindOne(context.TODO(), bson.M{"refresh_token": refreshToken}).Decode(&result)
+
+	return &result, err
+}
+
+func (r *UserRepo) GetByID(userID string) (*models.User, error) {
+
+	userObjID, err := primitive.ObjectIDFromHex(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var result models.User
+
+	err = r.collection.FindOne(context.TODO(), bson.M{"_id": userObjID}).Decode(&result)
+
+	return &result, err
+}
+
 func (r *UserRepo) GetUserPasswordHash(userLogin string) (string, error) {
 
 	var result struct {
@@ -70,7 +94,7 @@ func (r *UserRepo) GetAllUsers() ([]models.User, error) {
 
 	var users []models.User
 
-	cursor, err := r.collection.Find(context.TODO(), bson.M{})
+	cursor, err := r.collection.Find(context.TODO(), bson.M{"role": "user"})
 
 	if err != nil {
 		return nil, err

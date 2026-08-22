@@ -34,7 +34,7 @@ type CardRepo struct {
 
 func NewCardRepo() *CardRepo {
 	return &CardRepo{
-		collection: db.GetCollection("boards"),
+		collection: db.GetCollection("cards"),
 	}
 }
 
@@ -83,7 +83,7 @@ func (r *CardRepo) GetCards(boardID primitive.ObjectID) ([]models.Card, error) {
 
 	defer cursor.Close(context.TODO())
 
-	if err := cursor.All(context.TODO(), cards); err != nil {
+	if err := cursor.All(context.TODO(), &cards); err != nil {
 		return nil, err
 	}
 

@@ -37,7 +37,7 @@ func NewUserService(userRepo *repositories.UserRepo, tokenService *TokenService)
 	}
 }
 
-func (u *UserService) Registration(dto *dto.UserRegistrationDto) (models.TokenReponse, error) {
+func (u *UserService) Register(dto *dto.UserRegistrationDto) (models.TokenReponse, error) {
 
 	passwordHash, err := security.HashPassword(dto.Password)
 
@@ -50,15 +50,24 @@ func (u *UserService) Registration(dto *dto.UserRegistrationDto) (models.TokenRe
 		Email:    dto.Email,
 		Login:    dto.Login,
 		Password: passwordHash,
+		Role:     "user",
 	}
+
+	tokenPair, err := u.tokenService.GenerateTokensPair(user)
+
+	if err != nil {
+		return models.TokenReponse{}, err
+	}
+
+	user.RefreshToken = tokenPair.RefreshToken
 
 	u.userRepo.Create(user)
 
-	return models.TokenReponse{}, nil
+	return tokenPair, nil
 
 }
 
-func (u *UserService) Login(dto *dto.UserLoginDto) (*models.TokenReponse, error) {
+func (u *UserService) Login(dto *dto.UserLoginDto) (models.TokenReponse, error) {
 
 	fmt.Println("Start login...")
 
@@ -67,7 +76,7 @@ func (u *UserService) Login(dto *dto.UserLoginDto) (*models.TokenReponse, error)
 	fmt.Println("Got user")
 
 	if err != nil {
-		return &models.TokenReponse{}, err
+		return models.TokenReponse{}, err
 	}
 
 	verificationResult, _ := security.VerifyPassword(dto.Password, user.Password)
@@ -79,13 +88,39 @@ func (u *UserService) Login(dto *dto.UserLoginDto) (*models.TokenReponse, error)
 		tokensPair, err := u.tokenService.GenerateTokensPair(user)
 
 		if err != nil {
-			return &models.TokenReponse{}, err
+			return models.TokenReponse{}, err
 		}
 
 		return tokensPair, nil
 
 	}
 
-	return &models.TokenReponse{}, errors.New("Unathorized")
+	return models.TokenReponse{}, errors.New("Unathorized")
+
+}
+
+func (u *UserService) RefreshAccessToken(refreshToken string) (string, error) {
+
+	user, err := u.userRepo.GetByRefreshToken(refreshToken)
+
+	if err != nil {
+		return "", err
+	}
+
+	accessToken, err := u.tokenService.RefreshAccessToken(refreshToken, user)
+
+	return accessToken, err
+
+}
+
+func (u *UserService) GetUser(userID string) (*models.User, error) {
+
+	user, err := u.userRepo.GetByID(userID)
+
+	if err != nil {
+		return &models.User{}, nil
+	}
+
+	return user, nil
 
 }

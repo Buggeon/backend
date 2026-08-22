@@ -18,25 +18,81 @@ package main
 
 import (
 	"bugtracker/config"
+	"bugtracker/graph"
 	"bugtracker/internal/db"
 	"bugtracker/internal/handlers"
 	"bugtracker/internal/middleware"
+	"bugtracker/internal/models"
 	"bugtracker/internal/repositories"
+	"bugtracker/internal/security"
 	"bugtracker/internal/services"
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
+	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-func main() {
+func createAdmin(tokenService *services.TokenService) error {
 
-	err := godotenv.Load()
+	admin_password, err := security.HashPassword(os.Getenv("ADMIN_PASSWORD"))
 
 	if err != nil {
+		return err
+	}
+
+	admin_login := "@" + os.Getenv("ADMIN_LOGIN")
+	admin_name := os.Getenv("ADMIN_NAME")
+	admin_email := os.Getenv("ADMIN_EMAIL")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	defer cancel()
+
+	users := db.GetCollection("users")
+
+	count, err := users.CountDocuments(ctx, bson.M{"role": "admin"})
+
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+
+		admin := models.User{
+			Name:      admin_name,
+			Login:     admin_login,
+			Password:  admin_password,
+			Email:     admin_email,
+			Role:      "admin",
+			CreatedAt: time.Now(),
+		}
+
+		refreshToken, err := tokenService.GenerateRefreshToken(&admin)
+
+		if err != nil {
+			return err
+		}
+
+		admin.RefreshToken = refreshToken
+
+		_, err = users.InsertOne(context.TODO(), admin)
+
+		return err
+	}
+
+	return nil
+
+}
+
+func main() {
+	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error while config loading")
 	}
 
@@ -45,116 +101,156 @@ func main() {
 	mongoUser := os.Getenv("DB_USER")
 	mongoPassword := os.Getenv("DB_PASSWORD")
 
-	connectionString := fmt.Sprintf("mongodb://%s:%s@%s:%s/?authSource=admin", mongoUser, mongoPassword, mongoHost, mongoPort)
+	connectionString := fmt.Sprintf("mongodb://%s:%s@%s:%s/?authSource=admin",
+		mongoUser, mongoPassword, mongoHost, mongoPort)
 
 	if err := db.Connect(connectionString); err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	server := gin.Default()
-	server.Use(cors.New(cors.Config{
+	corsConfig := cors.New(cors.Config{
 		AllowAllOrigins: true,
-		AllowHeaders:    []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Access-Control-Allow-Origin"},
-	}))
+		AllowMethods: []string{
+			"GET",
+			"POST",
+			"PUT",
+			"PATCH",
+			"DELETE",
+			"OPTIONS",
+			"HEAD",
+		},
+		AllowHeaders: []string{
+			"Origin",
+			"Content-Type",
+			"Accept",
+			"Authorization",
+			"X-Requested-With",
+			"Access-Control-Request-Method",
+			"Access-Control-Request-Headers",
+		},
+		ExposeHeaders: []string{
+			"Content-Length",
+			"Access-Control-Allow-Origin",
+			"Access-Control-Allow-Headers",
+		},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	})
+
+	server := gin.Default()
+	server.Use(corsConfig)
 
 	userRepo := repositories.NewUserRepo()
 	projectRepo := repositories.NewProjectRepo()
 	memberRepo := repositories.NewMemberRepo()
 	boardRepo := repositories.NewBoardRepo()
 	cardRepo := repositories.NewCardRepo()
+	messageRepo := repositories.NewMessageRepo()
 
 	boardService := services.NewBoardService(boardRepo)
 	cardService := services.NewCardService(cardRepo)
 	memberService := services.NewMemberService(memberRepo)
-	projectService := services.NewProjectService(projectRepo, memberService)
+	projectService := services.NewProjectService(projectRepo, memberService, memberRepo)
 	tokenService := services.NewTokenService(config.LoadConfig())
 	userService := services.NewUserService(userRepo, tokenService)
 	systemService := services.NewSystemService(userRepo)
+	messageService := services.NewMessageService(messageRepo)
 
-	projectHandler := handlers.NewProjectHandler(projectService, cardService, boardService, memberService)
+	projectHandler := handlers.NewProjectHandler(projectService, cardService, boardService, memberService, messageService)
 	userHandler := handlers.NewUserHandler(userService)
 	systemHandler := handlers.NewSystemHandler(systemService)
 
 	authMiddleware := middleware.NewAuthMiddleware(tokenService)
 
-	protected := server.Group("/api")
-	protected.Use(authMiddleware.AuthRequired())
-	{
-		server.GET("/api/projects", func(ctx *gin.Context) {
-			projectHandler.GetProjects(ctx)
-		})
-
-		server.GET("/api/projects/:project_id", func(ctx *gin.Context) {
-			projectHandler.GetProjects(ctx)
-		})
-
-		server.POST("/api/projects", func(ctx *gin.Context) {
-			projectHandler.CreateProject(ctx)
-		})
-
-		server.GET("/api/projects/members/:member_id", func(ctx *gin.Context) {
-			projectHandler.GetMember(ctx)
-		})
-
-		server.GET("/api/projects/members", func(ctx *gin.Context) {
-			projectHandler.GetMembers(ctx)
-		})
-
-		server.POST("/api/projects/members", func(ctx *gin.Context) {
-			projectHandler.DeleteMember(ctx)
-		})
-
-		server.POST("/api/projects/boards", func(ctx *gin.Context) {
-			projectHandler.CreateBoard(ctx)
-		})
-
-		server.GET("/api/projects/boards", func(ctx *gin.Context) {
-			projectHandler.GetBoards(ctx)
-		})
-
-		server.GET("/api/projects/boards/:board_id", func(ctx *gin.Context) {
-			projectHandler.GetBoard(ctx)
-		})
-
-		server.POST("/api/projects/boards", func(ctx *gin.Context) {
-			projectHandler.GetBoard(ctx)
-		})
-
-		server.DELETE("/api/projects/boards", func(ctx *gin.Context) {
-			projectHandler.DeleteBoard(ctx)
-		})
-
-		server.POST("/api/projects/boards/cards", func(ctx *gin.Context) {
-			projectHandler.CreateCard(ctx)
-		})
-
-		server.GET("/api/projects/boards/cards", func(ctx *gin.Context) {
-			projectHandler.GetCards(ctx)
-		})
-
-		server.GET("/api/projects/boards/cards/:card_id", func(ctx *gin.Context) {
-			projectHandler.DeleteBoard(ctx)
-		})
-
-		server.GET("/api/getAllUsers", func(ctx *gin.Context) {
-			systemHandler.GetAllUsers(ctx)
-		})
-
-		server.DELETE("/api/projects/boards/cards", func(ctx *gin.Context) {
-			projectHandler.DeleteBoard(ctx)
-		})
+	if err := createAdmin(tokenService); err != nil {
+		fmt.Println("Failed to create admin")
 	}
 
-	server.POST("/user/registration", func(ctx *gin.Context) {
-		userHandler.Registration(ctx)
-	})
-	server.POST("user/login", func(ctx *gin.Context) {
-		userHandler.Login(ctx)
-	})
+	graphqlResolver := &graph.Resolver{
+		ProjectService: projectService,
+		BoardService:   boardService,
+		CardService:    cardService,
+		UserService:    userService,
+		MemberService:  memberService,
+		MessageService: messageService,
+	}
 
+	gqlHandler := handler.NewDefaultServer(
+		graph.NewExecutableSchema(
+			graph.Config{Resolvers: graphqlResolver},
+		),
+	)
+
+	setupRoutes(server, projectHandler, userHandler, systemHandler, authMiddleware, gqlHandler)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Printf("Server starting on :%s", port)
+	server.Run(":" + port)
+}
+
+func setupRoutes(
+	server *gin.Engine,
+	projectHandler *handlers.ProjectHandler,
+	userHandler *handlers.UserHandler,
+	systemHandler *handlers.SystemHandler,
+	authMiddleware *middleware.AuthMiddleware,
+	gqlHandler *handler.Server,
+) {
+	server.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+	server.POST("/auth/register", userHandler.Registration)
+	server.POST("/auth/login", userHandler.Login)
+	server.POST("/auth/refreshtoken", userHandler.RefreshAccessToken)
 	server.GET("/test", handlers.Test)
 
-	server.Run(":" + os.Getenv("PORT"))
+	api := server.Group("/api")
+	api.Use(authMiddleware.AuthRequired())
+	{
+		projects := api.Group("/projects")
+		{
+			projects.GET("", projectHandler.GetProjects)
+			projects.GET("/:project_id", projectHandler.GetProject)
+			projects.POST("", projectHandler.CreateProject)
+			projects.DELETE("/:project_id", projectHandler.DeleteProject)
 
+			members := projects.Group("/:project_id/members")
+			{
+				members.GET("", projectHandler.GetMembers)
+				members.GET("/:member_id", projectHandler.GetMember)
+				members.POST("", projectHandler.CreateMember)
+				members.DELETE("/:member_id", projectHandler.DeleteMember)
+			}
+
+			boards := projects.Group("/:project_id/boards")
+			{
+				boards.GET("", projectHandler.GetBoards)
+				boards.GET("/:board_id", projectHandler.GetBoard)
+				boards.POST("", projectHandler.CreateBoard)
+				boards.DELETE("/:board_id", projectHandler.DeleteBoard)
+
+				cards := boards.Group("/:board_id/cards")
+				{
+					cards.GET("", projectHandler.GetCards)
+					cards.GET("/:card_id", projectHandler.GetCard)
+					cards.POST("", projectHandler.CreateCard)
+					cards.DELETE("/:card_id", projectHandler.DeleteCard)
+
+					messages := cards.Group("/:card_id/messages")
+					{
+						messages.POST("", projectHandler.NewMessage)
+					}
+				}
+			}
+		}
+
+		queryGroup := api.Group("/query")
+		queryGroup.POST("", gin.WrapH(gqlHandler))
+
+		api.GET("/users", systemHandler.GetAllUsers)
+	}
 }

@@ -26,7 +26,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ProjectRepo struct {
@@ -41,7 +40,6 @@ func NewProjectRepo() *ProjectRepo {
 
 func (r *ProjectRepo) CreateProject(project *models.Project) error {
 
-	project.ID = primitive.NewObjectID()
 	project.CreatedAt = time.Now()
 	project.UpdatedAt = time.Now()
 
@@ -72,27 +70,25 @@ func (r *ProjectRepo) GetProject(projectID primitive.ObjectID) (models.Project, 
 
 }
 
-func (r *ProjectRepo) GetProjects(amount int, userID primitive.ObjectID) ([]models.Project, error) {
+func (r *ProjectRepo) GetProjectsByIDs(projectsIDs []primitive.ObjectID) ([]models.Project, error) {
 
-	opts := options.Find().SetLimit(int64(amount)).SetSort(bson.D{{"created_at", 1}})
-
-	var projects []models.Project
-	filter := bson.M{
-		"members": bson.M{"$in": []primitive.ObjectID{userID}},
+	if len(projectsIDs) == 0 {
+		return []models.Project{}, nil
 	}
 
-	cursor, err := r.collection.Find(context.TODO(), filter, opts)
+	filter := bson.M{"_id": bson.M{"$in": projectsIDs}}
+	cursor, err := r.collection.Find(context.TODO(), filter)
 
 	if err != nil {
-		return nil, err
+		return []models.Project{}, err
 	}
 
 	defer cursor.Close(context.TODO())
 
-	if err := cursor.All(context.TODO(), &projects); err != nil {
-		return nil, err
-	}
+	var projects []models.Project
 
-	return projects, nil
+	err = cursor.All(context.TODO(), &projects)
+
+	return projects, err
 
 }

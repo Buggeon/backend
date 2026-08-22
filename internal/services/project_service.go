@@ -27,29 +27,41 @@ import (
 
 type ProjectService struct {
 	projectRepo   *repositories.ProjectRepo
+	memberRepo    *repositories.MemberRepo
 	memberService *MemberService
 }
 
-func NewProjectService(projectRepo *repositories.ProjectRepo, memberService *MemberService) *ProjectService {
+func NewProjectService(projectRepo *repositories.ProjectRepo, memberService *MemberService, memberRepo *repositories.MemberRepo) *ProjectService {
 	return &ProjectService{
 		projectRepo:   projectRepo,
 		memberService: memberService,
+		memberRepo:    memberRepo,
 	}
 }
 
 func (s *ProjectService) CreateProject(projectData *dto.CreateProjectDto) error {
 
 	projectID := primitive.NewObjectID()
-	ownerId, err := primitive.ObjectIDFromHex(projectData.UserId)
+
+	leadObjID, err := s.memberService.CreateMember(&dto.CreateMemberDto{
+		ProjectID:  projectID.Hex(),
+		UserID:     projectData.LeadID,
+		Role:       "Lead",
+		Directions: []string{"managment"},
+	})
 
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("===LEAD ID FROM PROJECT SERVICE===")
+	fmt.Println(leadObjID)
+
 	project := &models.Project{
+		ID:          projectID,
 		Name:        projectData.Name,
 		Description: projectData.Description,
-		OwnerId:     ownerId,
+		LeadID:      leadObjID,
 	}
 
 	if err := s.projectRepo.CreateProject(project); err != nil {
@@ -57,9 +69,9 @@ func (s *ProjectService) CreateProject(projectData *dto.CreateProjectDto) error 
 	}
 
 	for _, member := range projectData.Members {
-		if err := s.memberService.CreateMember(&dto.CreateMemberDto{
-			UserId:     member.UserId,
-			ProjectId:  projectID.Hex(),
+		if _, err := s.memberService.CreateMember(&dto.CreateMemberDto{
+			UserID:     member.UserID,
+			ProjectID:  projectID.Hex(),
 			Role:       member.Role,
 			Directions: member.Directions,
 		}); err != nil {
@@ -71,29 +83,32 @@ func (s *ProjectService) CreateProject(projectData *dto.CreateProjectDto) error 
 
 }
 
-func (s *ProjectService) GetProjects(dto *dto.GetProjectsDto, userID string) ([]models.Project, error) {
+func (s *ProjectService) GetProjects(userID string) ([]models.Project, error) {
 
 	objID, err := primitive.ObjectIDFromHex(userID)
-
-	projects, err := s.projectRepo.GetProjects(dto.Amount, objID)
-
-	fmt.Println(err)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return projects, nil
+	projectsIDs, err := s.memberRepo.GetProjectsIDsByUser(objID)
 
+	if err != nil {
+		return nil, err
+	}
+
+	return s.projectRepo.GetProjectsByIDs(projectsIDs)
 }
 
-func (s *ProjectService) GetProject(dto *dto.GetProjectDto) (models.Project, error) {
+func (s *ProjectService) GetProject(projectID string) (models.Project, error) {
 
-	objID, err := primitive.ObjectIDFromHex(dto.ProjectID)
+	objID, err := primitive.ObjectIDFromHex(projectID)
+
+	if err != nil {
+		return models.Project{}, err
+	}
 
 	project, err := s.projectRepo.GetProject(objID)
-
-	fmt.Println(err)
 
 	if err != nil {
 		return models.Project{}, err
@@ -103,11 +118,29 @@ func (s *ProjectService) GetProject(dto *dto.GetProjectDto) (models.Project, err
 
 }
 
-func (s *ProjectService) DeleteProject(dto *dto.GetProjectDto) error {
+func (s *ProjectService) DeleteProject(projectID string) error {
 
-	objID, err := primitive.ObjectIDFromHex(dto.ProjectID)
+	objID, err := primitive.ObjectIDFromHex(projectID)
+
+	if err != nil {
+		return err
+	}
 
 	err = s.projectRepo.DeleteProject(objID)
+
+	if err != nil {
+		return err
+	}
+
+	members, err := s.memberRepo.GetMembers(objID)
+
+	for _, member := range members {
+		err := s.memberRepo.DeleteMember(member.ID)
+
+		if err != nil {
+			fmt.Println("Failed to delete member")
+		}
+	}
 
 	return err
 

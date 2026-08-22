@@ -19,6 +19,7 @@ package handlers
 import (
 	"bugtracker/internal/dto"
 	"bugtracker/internal/services"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,14 +29,22 @@ type ProjectHandler struct {
 	boardService   *services.BoardService
 	cardService    *services.CardService
 	memberService  *services.MemberService
+	messageService *services.MessageService
 }
 
-func NewProjectHandler(projectService *services.ProjectService, cardService *services.CardService, boardServices *services.BoardService, memberService *services.MemberService) *ProjectHandler {
+func NewProjectHandler(
+	projectService *services.ProjectService,
+	cardService *services.CardService,
+	boardServices *services.BoardService,
+	memberService *services.MemberService,
+	messageService *services.MessageService,
+) *ProjectHandler {
 	return &ProjectHandler{
 		projectService: projectService,
 		boardService:   boardServices,
 		cardService:    cardService,
 		memberService:  memberService,
+		messageService: messageService,
 	}
 }
 
@@ -45,9 +54,20 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.Status(403)
+		c.Abort()
+		return
 	}
 
-	h.projectService.CreateProject(&dto)
+	err := h.projectService.CreateProject(&dto)
+
+	if err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	c.Status(201)
+
 }
 
 func (h *ProjectHandler) EditProject(c *gin.Context) {
@@ -56,27 +76,43 @@ func (h *ProjectHandler) EditProject(c *gin.Context) {
 
 func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 
+	projectID := c.Param("project_id")
+
+	err := h.projectService.DeleteProject(projectID)
+
+	if err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	c.Status(200)
 }
 
 func (h *ProjectHandler) GetProject(c *gin.Context) {
 
+	projectID := c.Param("project_id")
+
+	if project, err := h.projectService.GetProject(projectID); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.JSON(200, project)
+	}
 }
 
 func (h *ProjectHandler) GetProjects(c *gin.Context) {
 
-	var dto dto.GetProjectsDto
+	userID, _ := c.Get("userID")
 
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.Status(403)
-	}
-
-	//userID, _ := c.Get("userID")
-	userID := "6a79b2f98860397db9e68552"
-
-	projects, err := h.projectService.GetProjects(&dto, userID)
+	projects, err := h.projectService.GetProjects(userID.(string))
 
 	if err != nil {
+		fmt.Println(err)
 		c.Status(403)
+		c.Abort()
+		return
 
 	} else {
 		c.JSON(200, projects)
@@ -86,6 +122,25 @@ func (h *ProjectHandler) GetProjects(c *gin.Context) {
 
 func (h *ProjectHandler) CreateBoard(c *gin.Context) {
 
+	var dto dto.CreateBoardDto
+	projectID := c.Param("project_id")
+
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	dto.ProjectID = projectID
+
+	if err := h.boardService.CreateBoard(&dto); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.Status(200)
+	}
+
 }
 
 func (h *ProjectHandler) EditBoard(c *gin.Context) {
@@ -94,52 +149,218 @@ func (h *ProjectHandler) EditBoard(c *gin.Context) {
 
 func (h *ProjectHandler) DeleteBoard(c *gin.Context) {
 
+	boardID := c.Param("board_id")
+
+	if err := h.boardService.DeleteBoard(boardID); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.Status(200)
+	}
 }
 
 func (h *ProjectHandler) GetBoard(c *gin.Context) {
 
+	boardID := c.Param("board_id")
+
+	if board, err := h.boardService.GetBoard(boardID); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.JSON(200, board)
+	}
 }
 
 func (h *ProjectHandler) GetBoards(c *gin.Context) {
 
+	projectID := c.Param("project_id")
+
+	if boards, err := h.boardService.GetBoards(projectID); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.JSON(200, boards)
+	}
 }
 
 func (h *ProjectHandler) CreateCard(c *gin.Context) {
+	var dto dto.CreateCardDto
 
+	boardID := c.Param("board_id")
+
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	dto.BoardID = boardID
+
+	if err := h.cardService.CreateCard(&dto); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.Status(200)
+	}
 }
 
 func (h *ProjectHandler) EditCard(c *gin.Context) {
+	// var dto dto.CreateCardDto
 
+	// if err := c.ShouldBindJSON(&dto); err != nil {
+	// 	c.Status(403)
+	// 	c.Abort()
+	// }
+
+	// if err := h.boardService.CreateCard(&dto); err != nil {
+	// 	c.Status(403)
+	// 	c.Abort()
+	// } else {
+	// 	c.Status(200)
+	// }
 }
 
 func (h *ProjectHandler) DeleteCard(c *gin.Context) {
 
+	cardID := c.Param("card_id")
+
+	if err := h.cardService.DeleteCard(cardID); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.Status(200)
+	}
 }
 
 func (h *ProjectHandler) GetCard(c *gin.Context) {
 
+	cardID := c.Param("card_id")
+
+	if card, err := h.cardService.GetCard(cardID); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.JSON(200, card)
+	}
 }
 
 func (h *ProjectHandler) GetCards(c *gin.Context) {
 
+	boardID := c.Param("board_id")
+
+	if cards, err := h.cardService.GetCards(boardID); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.JSON(200, cards)
+	}
 }
 
 func (h *ProjectHandler) CreateMember(c *gin.Context) {
+	var dto dto.CreateMemberDto
 
+	projectID := c.Param("project_id")
+
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	dto.ProjectID = projectID
+
+	if _, err := h.memberService.CreateMember(&dto); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.Status(200)
+	}
 }
 
 func (h *ProjectHandler) EditMember(c *gin.Context) {
+	// var dto dto.CreateBoardDto
 
+	// if err := c.ShouldBindJSON(&dto); err != nil {
+	// 	c.Status(403)
+	// }
+
+	// if err := h.boardService.CreateBoard(&dto); err != nil {
+	// 	c.Status(403)
+	// } else {
+	// 	c.Status(200)
+	// }
 }
 
 func (h *ProjectHandler) DeleteMember(c *gin.Context) {
 
+	memberID := c.Param("member_id")
+
+	if err := h.memberService.DeleteMember(memberID); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.Status(200)
+	}
 }
 
 func (h *ProjectHandler) GetMember(c *gin.Context) {
 
+	memberID := c.Param("member_id")
+
+	if member, err := h.memberService.GetMember(memberID); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.JSON(200, member)
+	}
 }
 
 func (h *ProjectHandler) GetMembers(c *gin.Context) {
+
+	projectID := c.Param("project_id")
+
+	if members, err := h.memberService.GetMembers(projectID); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	} else {
+		c.JSON(200, members)
+	}
+}
+
+func (h *ProjectHandler) NewMessage(c *gin.Context) {
+
+	var dto dto.NewMessageDto
+
+	if err := c.ShouldBindJSON(&dto); err != nil {
+
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	userID, _ := c.Get("userID")
+	cardID := c.Param("card_id")
+
+	dto.CardID = cardID
+	dto.SenderID = userID.(string)
+
+	if err := h.messageService.NewMessage(dto); err != nil {
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	c.Status(201)
 
 }

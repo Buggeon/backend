@@ -18,7 +18,8 @@ package dto
 
 type CreateBoardDto struct {
 	Name      string `json:"name" binding:"required"`
-	ProjectID string `json:"project_id" binding:"required"`
+	Direction string `json:"direction" binding:"required"`
+	ProjectID string `json:"project_id"`
 }
 
 type GetBoardDto struct {

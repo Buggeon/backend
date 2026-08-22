@@ -40,7 +40,6 @@ func NewMemberRepo() *MemberRepo {
 
 func (r *MemberRepo) CreateMember(member *models.Member) error {
 
-	member.ID = primitive.NewObjectID()
 	member.CreatedAt = time.Now()
 
 	_, err := r.collection.InsertOne(context.TODO(), member)
@@ -82,10 +81,36 @@ func (r *MemberRepo) GetMembers(projectID primitive.ObjectID) ([]models.Member, 
 
 	defer cursor.Close(context.TODO())
 
-	if err := cursor.All(context.TODO(), members); err != nil {
+	if err := cursor.All(context.TODO(), &members); err != nil {
 		return nil, err
 	}
 
 	return members, nil
 
+}
+
+func (r *MemberRepo) GetProjectsIDsByUser(userID primitive.ObjectID) ([]primitive.ObjectID, error) {
+
+	filter := bson.M{"user_id": userID}
+	cursor, err := r.collection.Find(context.TODO(), filter)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer cursor.Close(context.TODO())
+
+	var members []models.Member
+
+	if err := cursor.All(context.TODO(), &members); err != nil {
+		return nil, err
+	}
+
+	projectsIDs := make([]primitive.ObjectID, len(members))
+
+	for i, m := range members {
+		projectsIDs[i] = m.ProjectID
+	}
+
+	return projectsIDs, nil
 }

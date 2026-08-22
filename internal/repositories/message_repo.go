@@ -28,52 +28,51 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type BoardRepo struct {
+type MessageRepo struct {
 	collection *mongo.Collection
 }
 
-func NewBoardRepo() *BoardRepo {
-	return &BoardRepo{
-		collection: db.GetCollection("boards"),
+func NewMessageRepo() *MessageRepo {
+	return &MessageRepo{
+		collection: db.GetCollection("messages"),
 	}
 }
 
-func (r *BoardRepo) CreateBoard(board *models.Board) error {
+func (r *MessageRepo) NewMessage(message *models.Message) error {
 
-	board.ID = primitive.NewObjectID()
-	board.CreatedAt = time.Now()
-	board.UpdatedAt = time.Now()
+	message.ID = primitive.NewObjectID()
+	message.CreatedAt = time.Now()
 
-	_, err := r.collection.InsertOne(context.TODO(), board)
+	_, err := r.collection.InsertOne(context.TODO(), message)
 	return err
 
 }
 
-func (r *BoardRepo) DeleteBoard(boardID primitive.ObjectID) error {
+func (r *MessageRepo) DeleteMessage(messageID primitive.ObjectID) error {
 
-	result, err := r.collection.DeleteOne(context.TODO(), bson.M{"_id": boardID})
+	result, err := r.collection.DeleteOne(context.TODO(), bson.M{"_id": messageID})
 
 	if result.DeletedCount != 1 || err != nil {
-		return errors.New("Failed to delete board")
+		return errors.New("Failed to delete message")
 	}
 
 	return nil
 
 }
 
-func (r *BoardRepo) GetBoard(boardID primitive.ObjectID) (models.Board, error) {
+func (r *MessageRepo) GetMessage(messageID primitive.ObjectID) (models.Member, error) {
 
-	var board models.Board
+	var message models.Member
 
-	err := r.collection.FindOne(context.TODO(), bson.M{"_id": boardID}).Decode(&board)
+	err := r.collection.FindOne(context.TODO(), bson.M{"_id": messageID}).Decode(&message)
 
-	return board, err
+	return message, err
 
 }
 
-func (r *BoardRepo) GetBoards(projectID primitive.ObjectID) ([]models.Board, error) {
+func (r *MessageRepo) GetMessages(projectID primitive.ObjectID) ([]models.Member, error) {
 
-	var boards []models.Board
+	var members []models.Member
 
 	cursor, err := r.collection.Find(context.TODO(), bson.M{"project_id": projectID})
 
@@ -83,10 +82,10 @@ func (r *BoardRepo) GetBoards(projectID primitive.ObjectID) ([]models.Board, err
 
 	defer cursor.Close(context.TODO())
 
-	if err := cursor.All(context.TODO(), &boards); err != nil {
+	if err := cursor.All(context.TODO(), &members); err != nil {
 		return nil, err
 	}
 
-	return boards, nil
+	return members, nil
 
 }

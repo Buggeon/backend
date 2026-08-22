@@ -27,3 +27,7 @@ type UserLoginDto struct {
 	Login    string `json:"login" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
+
+type RefreshAccessTokenDto struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}

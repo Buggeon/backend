@@ -38,6 +38,8 @@ func (s *SystemHandler) GetAllUsers(c *gin.Context) {
 
 	if err != nil {
 		c.Status(403)
+		c.Abort()
+		return
 	} else {
 		c.JSON(200, users)
 	}
