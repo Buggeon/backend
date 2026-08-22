@@ -26,12 +26,14 @@ import (
 )
 
 type MemberService struct {
-	memberRepo *repositories.MemberRepo
+	memberRepo  *repositories.MemberRepo
+	projectRepo *repositories.ProjectRepo
 }
 
-func NewMemberService(memberRepo *repositories.MemberRepo) *MemberService {
+func NewMemberService(memberRepo *repositories.MemberRepo, projectRepo *repositories.ProjectRepo) *MemberService {
 	return &MemberService{
-		memberRepo: memberRepo,
+		memberRepo:  memberRepo,
+		projectRepo: projectRepo,
 	}
 }
 
@@ -49,10 +51,7 @@ func (s *MemberService) CreateMember(dto *dto.CreateMemberDto) (primitive.Object
 		return primitive.ObjectID{}, err
 	}
 
-	memberID := primitive.NewObjectID()
-
 	member := &models.Member{
-		ID:         memberID,
 		UserID:     userID,
 		Role:       dto.Role,
 		ProjectID:  projectID,
@@ -60,9 +59,9 @@ func (s *MemberService) CreateMember(dto *dto.CreateMemberDto) (primitive.Object
 		CreatedAt:  time.Now(),
 	}
 
-	err = s.memberRepo.CreateMember(member)
-	return memberID, err
+	memberID, err := s.memberRepo.CreateMember(member)
 
+	return memberID, s.projectRepo.AddMember(projectID, memberID)
 }
 
 func (s *MemberService) GetMember(memberID string) (models.Member, error) {

@@ -38,14 +38,14 @@ func NewCardRepo() *CardRepo {
 	}
 }
 
-func (r *CardRepo) CreateCard(card *models.Card) error {
+func (r *CardRepo) CreateCard(card *models.Card) (primitive.ObjectID, error) {
 
 	card.ID = primitive.NewObjectID()
 	card.CreatedAt = time.Now()
 	card.UpdatedAt = time.Now()
 
 	_, err := r.collection.InsertOne(context.TODO(), card)
-	return err
+	return card.ID, err
 
 }
 
@@ -88,5 +88,16 @@ func (r *CardRepo) GetCards(boardID primitive.ObjectID) ([]models.Card, error) {
 	}
 
 	return cards, nil
+
+}
+
+func (r *CardRepo) AddMessage(cardID, messageID primitive.ObjectID) error {
+
+	filter := bson.M{"_id": cardID}
+	update := bson.M{"$push": bson.M{"messages": messageID}}
+
+	_, err := r.collection.UpdateOne(context.TODO(), filter, update)
+
+	return err
 
 }

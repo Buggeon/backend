@@ -10,11 +10,13 @@ import (
 
 type MessageService struct {
 	messageRepo *repositories.MessageRepo
+	cardRepo    *repositories.CardRepo
 }
 
-func NewMessageService(messageRepo *repositories.MessageRepo) *MessageService {
+func NewMessageService(messageRepo *repositories.MessageRepo, cardRepo *repositories.CardRepo) *MessageService {
 	return &MessageService{
 		messageRepo: messageRepo,
+		cardRepo:    cardRepo,
 	}
 }
 
@@ -27,6 +29,7 @@ func (c *MessageService) NewMessage(message dto.NewMessageDto) error {
 	}
 
 	cardID, err := primitive.ObjectIDFromHex(message.CardID)
+	var messageID primitive.ObjectID
 
 	if err != nil {
 		return err
@@ -39,19 +42,34 @@ func (c *MessageService) NewMessage(message dto.NewMessageDto) error {
 			return err
 		}
 
-		return c.messageRepo.NewMessage(&models.Message{
+		id, err := c.messageRepo.NewMessage(&models.Message{
 			SenderID: senderID,
 			CardID:   cardID,
 			ReplyTo:  replyTo,
 			Content:  message.Content,
 		})
+
+		if err != nil {
+			return err
+		}
+
+		messageID = id
+
 	} else {
-		return c.messageRepo.NewMessage(&models.Message{
+		id, err := c.messageRepo.NewMessage(&models.Message{
 			SenderID: senderID,
-			CardID:   cardID,	
+			CardID:   cardID,
 			Content:  message.Content,
 		})
+
+		if err != nil {
+			return err
+		}
+
+		messageID = id
 	}
+
+	return c.cardRepo.AddMessage(cardID, messageID)
 
 }
 

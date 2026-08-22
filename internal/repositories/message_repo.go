@@ -38,13 +38,13 @@ func NewMessageRepo() *MessageRepo {
 	}
 }
 
-func (r *MessageRepo) NewMessage(message *models.Message) error {
+func (r *MessageRepo) NewMessage(message *models.Message) (primitive.ObjectID, error) {
 
 	message.ID = primitive.NewObjectID()
 	message.CreatedAt = time.Now()
 
 	_, err := r.collection.InsertOne(context.TODO(), message)
-	return err
+	return message.ID, err
 
 }
 

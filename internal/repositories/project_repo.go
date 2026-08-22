@@ -92,3 +92,36 @@ func (r *ProjectRepo) GetProjectsByIDs(projectsIDs []primitive.ObjectID) ([]mode
 	return projects, err
 
 }
+
+func (r *ProjectRepo) AddBoard(projectID, boardID primitive.ObjectID) error {
+
+	filter := bson.M{"_id": projectID}
+	update := bson.M{"$push": bson.M{"boards": boardID}}
+
+	_, err := r.collection.UpdateOne(context.TODO(), filter, update)
+
+	return err
+
+}
+
+func (r *ProjectRepo) AddMember(projectID, memberID primitive.ObjectID) error {
+
+	filter := bson.M{"_id": projectID}
+	update := bson.M{"$push": bson.M{"members": memberID}}
+
+	_, err := r.collection.UpdateOne(context.TODO(), filter, update)
+
+	return err
+
+}
+
+func (r *ProjectRepo) AddLead(projectID, leadID primitive.ObjectID) error {
+
+	filter := bson.M{"_id": projectID}
+	update := bson.M{"$set": bson.M{"lead_id": leadID}}
+
+	_, err := r.collection.UpdateOne(context.TODO(), filter, update)
+
+	return err
+
+}

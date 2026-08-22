@@ -38,12 +38,13 @@ func NewMemberRepo() *MemberRepo {
 	}
 }
 
-func (r *MemberRepo) CreateMember(member *models.Member) error {
+func (r *MemberRepo) CreateMember(member *models.Member) (primitive.ObjectID, error) {
 
+	member.ID = primitive.NewObjectID()
 	member.CreatedAt = time.Now()
 
 	_, err := r.collection.InsertOne(context.TODO(), member)
-	return err
+	return member.ID, err
 
 }
 

@@ -148,14 +148,14 @@ func main() {
 	cardRepo := repositories.NewCardRepo()
 	messageRepo := repositories.NewMessageRepo()
 
-	boardService := services.NewBoardService(boardRepo)
-	cardService := services.NewCardService(cardRepo)
-	memberService := services.NewMemberService(memberRepo)
+	boardService := services.NewBoardService(boardRepo, projectRepo)
+	cardService := services.NewCardService(cardRepo, boardRepo)
+	memberService := services.NewMemberService(memberRepo, projectRepo)
 	projectService := services.NewProjectService(projectRepo, memberService, memberRepo)
 	tokenService := services.NewTokenService(config.LoadConfig())
 	userService := services.NewUserService(userRepo, tokenService)
 	systemService := services.NewSystemService(userRepo)
-	messageService := services.NewMessageService(messageRepo)
+	messageService := services.NewMessageService(messageRepo, cardRepo)
 
 	projectHandler := handlers.NewProjectHandler(projectService, cardService, boardService, memberService, messageService)
 	userHandler := handlers.NewUserHandler(userService)

@@ -26,12 +26,14 @@ import (
 )
 
 type BoardService struct {
-	boardRepo *repositories.BoardRepo
+	boardRepo   *repositories.BoardRepo
+	projectRepo *repositories.ProjectRepo
 }
 
-func NewBoardService(boardRepo *repositories.BoardRepo) *BoardService {
+func NewBoardService(boardRepo *repositories.BoardRepo, projectRepo *repositories.ProjectRepo) *BoardService {
 	return &BoardService{
-		boardRepo: boardRepo,
+		boardRepo:   boardRepo,
+		projectRepo: projectRepo,
 	}
 }
 
@@ -47,11 +49,17 @@ func (b *BoardService) CreateBoard(dto *dto.CreateBoardDto) error {
 		Name:      dto.Name,
 		ProjectID: projectID,
 		Direction: dto.Direction,
+		Cards:     []primitive.ObjectID{},
 	}
 
-	err = b.boardRepo.CreateBoard(board)
+	boardID, err := b.boardRepo.CreateBoard(board)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	return b.projectRepo.AddBoard(projectID, boardID)
+
 }
 
 func (b *BoardService) GetBoard(boardID string) (models.Board, error) {

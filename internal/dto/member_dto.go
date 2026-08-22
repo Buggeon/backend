@@ -17,7 +17,7 @@
 package dto
 
 type CreateMemberDto struct {
-	ProjectID  string   `json:"project_id" binding:"required"`
+	ProjectID  string   `json:"project_id"`
 	UserID     string   `json:"user_id" binding:"required"`
 	Role       string   `json:"role" binding:"required"`
 	Directions []string `json:"directions" binding:"required"`

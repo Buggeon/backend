@@ -26,12 +26,14 @@ import (
 )
 
 type CardService struct {
-	cardRepo *repositories.CardRepo
+	cardRepo  *repositories.CardRepo
+	boardRepo *repositories.BoardRepo
 }
 
-func NewCardService(cardRepo *repositories.CardRepo) *CardService {
+func NewCardService(cardRepo *repositories.CardRepo, boardRepo *repositories.BoardRepo) *CardService {
 	return &CardService{
-		cardRepo: cardRepo,
+		cardRepo:  cardRepo,
+		boardRepo: boardRepo,
 	}
 }
 
@@ -60,13 +62,14 @@ func (c *CardService) CreateCard(dto *dto.CreateCardDto) error {
 		Assignees: assigneeIDs,
 		BoardID:   boardID,
 		Priority:  dto.Priority,
+		Messages:  []primitive.ObjectID{},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
-	err = c.cardRepo.CreateCard(card)
+	cardID, err := c.cardRepo.CreateCard(card)
 
-	return err
+	return c.boardRepo.AddCard(boardID, cardID)
 }
 
 func (c *CardService) GetCard(cardID string) (models.Card, error) {

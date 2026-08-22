@@ -43,40 +43,37 @@ func (s *ProjectService) CreateProject(projectData *dto.CreateProjectDto) error 
 
 	projectID := primitive.NewObjectID()
 
-	leadObjID, err := s.memberService.CreateMember(&dto.CreateMemberDto{
-		ProjectID:  projectID.Hex(),
-		UserID:     projectData.LeadID,
-		Role:       "Lead",
-		Directions: []string{"managment"},
-	})
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("===LEAD ID FROM PROJECT SERVICE===")
-	fmt.Println(leadObjID)
-
 	project := &models.Project{
 		ID:          projectID,
 		Name:        projectData.Name,
 		Description: projectData.Description,
-		LeadID:      leadObjID,
+		Members:     []primitive.ObjectID{},
+		Boards:      []primitive.ObjectID{},
 	}
 
 	if err := s.projectRepo.CreateProject(project); err != nil {
 		return err
 	}
 
+	projectData.Members = append(projectData.Members, dto.MemberDto{
+		UserID:     projectData.LeadID,
+		Role:       "Lead",
+		Directions: []string{"managment"},
+	})
+
 	for _, member := range projectData.Members {
-		if _, err := s.memberService.CreateMember(&dto.CreateMemberDto{
+
+		memberID, _ := s.memberService.CreateMember(&dto.CreateMemberDto{
 			UserID:     member.UserID,
 			ProjectID:  projectID.Hex(),
 			Role:       member.Role,
 			Directions: member.Directions,
-		}); err != nil {
-			return err
+		})
+
+		if member.UserID == projectData.LeadID {
+			s.projectRepo.AddLead(projectID, memberID)
 		}
+
 	}
 
 	return nil

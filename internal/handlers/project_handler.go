@@ -126,6 +126,7 @@ func (h *ProjectHandler) CreateBoard(c *gin.Context) {
 	projectID := c.Param("project_id")
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
+		fmt.Println(err)
 		c.Status(403)
 		c.Abort()
 		return
@@ -134,6 +135,9 @@ func (h *ProjectHandler) CreateBoard(c *gin.Context) {
 	dto.ProjectID = projectID
 
 	if err := h.boardService.CreateBoard(&dto); err != nil {
+
+		fmt.Println(err)
+
 		c.Status(403)
 		c.Abort()
 		return
@@ -192,6 +196,7 @@ func (h *ProjectHandler) CreateCard(c *gin.Context) {
 	boardID := c.Param("board_id")
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
+		fmt.Println(err)
 		c.Status(403)
 		c.Abort()
 		return
@@ -200,6 +205,7 @@ func (h *ProjectHandler) CreateCard(c *gin.Context) {
 	dto.BoardID = boardID
 
 	if err := h.cardService.CreateCard(&dto); err != nil {
+		fmt.Println(err)
 		c.Status(403)
 		c.Abort()
 		return
@@ -269,6 +275,7 @@ func (h *ProjectHandler) CreateMember(c *gin.Context) {
 	projectID := c.Param("project_id")
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
+		fmt.Println(err)
 		c.Status(403)
 		c.Abort()
 		return
@@ -277,6 +284,7 @@ func (h *ProjectHandler) CreateMember(c *gin.Context) {
 	dto.ProjectID = projectID
 
 	if _, err := h.memberService.CreateMember(&dto); err != nil {
+		fmt.Println(err)
 		c.Status(403)
 		c.Abort()
 		return
