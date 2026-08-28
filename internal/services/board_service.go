@@ -20,7 +20,6 @@ import (
 	"bugtracker/internal/dto"
 	"bugtracker/internal/models"
 	"bugtracker/internal/repositories"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -79,11 +78,11 @@ func (b *BoardService) GetBoards(projectID string) ([]models.Board, error) {
 
 	objID, err := primitive.ObjectIDFromHex(projectID)
 
-	boards, err := b.boardRepo.GetBoards(objID)
+	if err != nil {
+		return nil, err
+	}
 
-	fmt.Println(err)
-
-	return boards, err
+	return b.boardRepo.GetBoards(objID)
 }
 
 func (b *BoardService) DeleteBoard(boardID string) error {

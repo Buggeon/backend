@@ -20,6 +20,7 @@ import (
 	"bugtracker/internal/dto"
 	"bugtracker/internal/services"
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,7 +53,20 @@ func (h *UserHandler) Registration(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, tokenPair)
+	cookie := &http.Cookie{
+		Name:     "refresh_token",
+		Value:    tokenPair.RefreshToken,
+		MaxAge:   60 * 60 * 24 * 30,
+		Path:     "auth/refresh",
+		Domain:   "localhost",
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(c.Writer, cookie)
+
+	c.JSON(200, gin.H{"access_token": tokenPair.AccessToken})
 
 }
 

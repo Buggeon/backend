@@ -125,3 +125,14 @@ func (r *ProjectRepo) AddLead(projectID, leadID primitive.ObjectID) error {
 	return err
 
 }
+
+func (r *ProjectRepo) SetProjectLogoUrl(projectID primitive.ObjectID, logoUrl string) error {
+
+	filter := bson.M{"_id": projectID}
+	update := bson.M{"$set": bson.M{"logo_url": logoUrl}}
+
+	_, err := r.collection.UpdateOne(context.TODO(), filter, update)
+
+	return err
+
+}

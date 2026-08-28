@@ -20,6 +20,7 @@ import (
 	"bugtracker/internal/dto"
 	"bugtracker/internal/services"
 	"fmt"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -50,15 +51,29 @@ func NewProjectHandler(
 
 func (h *ProjectHandler) CreateProject(c *gin.Context) {
 
-	var dto dto.CreateProjectDto
+	leadID := c.Request.FormValue("lead_id")
+	name := c.Request.FormValue("name")
+	description := c.Request.FormValue("description")
+	//members := c.Request.FormValue("members")
+	logo, _ := c.FormFile("logo")
+	progress := c.Request.FormValue("progress")
 
-	if err := c.ShouldBindJSON(&dto); err != nil {
+	progressInt, err := strconv.Atoi(progress)
+
+	if err != nil {
 		c.Status(403)
 		c.Abort()
 		return
 	}
 
-	err := h.projectService.CreateProject(&dto)
+	err = h.projectService.CreateProject(&dto.CreateProjectDto{
+		LeadID:      leadID,
+		Name:        name,
+		Description: description,
+		Logo:        logo,
+		Progress:    progressInt,
+		//Members: string(membersJSON),
+	})
 
 	if err != nil {
 		c.Status(403)
@@ -70,7 +85,34 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 
 }
 
-func (h *ProjectHandler) EditProject(c *gin.Context) {
+func (h *ProjectHandler) SetProjectLogo(c *gin.Context) {
+
+	file, err := c.FormFile("logo")
+	projectID := c.Param("project_id")
+
+	if err != nil {
+		c.JSON(403, "New logo file was not provide")
+		return
+	}
+
+	err = h.projectService.SetProjectLogo(projectID, file)
+
+	if err != nil {
+		c.JSON(500, "Failed to upload new logo file")
+		return
+	}
+
+}
+
+func (h *ProjectHandler) SetProjectName(c *gin.Context) {
+
+}
+
+func (h *ProjectHandler) SetProjectDescription(c *gin.Context) {
+
+}
+
+func (h *ProjectHandler) SetProjectProgress(c *gin.Context) {
 
 }
 

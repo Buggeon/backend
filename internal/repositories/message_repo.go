@@ -60,9 +60,9 @@ func (r *MessageRepo) DeleteMessage(messageID primitive.ObjectID) error {
 
 }
 
-func (r *MessageRepo) GetMessage(messageID primitive.ObjectID) (models.Member, error) {
+func (r *MessageRepo) GetMessage(messageID primitive.ObjectID) (models.Message, error) {
 
-	var message models.Member
+	var message models.Message
 
 	err := r.collection.FindOne(context.TODO(), bson.M{"_id": messageID}).Decode(&message)
 
@@ -70,11 +70,11 @@ func (r *MessageRepo) GetMessage(messageID primitive.ObjectID) (models.Member, e
 
 }
 
-func (r *MessageRepo) GetMessages(projectID primitive.ObjectID) ([]models.Member, error) {
+func (r *MessageRepo) GetMessages(cardID primitive.ObjectID) ([]models.Message, error) {
 
-	var members []models.Member
+	var members []models.Message
 
-	cursor, err := r.collection.Find(context.TODO(), bson.M{"project_id": projectID})
+	cursor, err := r.collection.Find(context.TODO(), bson.M{"card_id": cardID})
 
 	if err != nil {
 		return nil, err

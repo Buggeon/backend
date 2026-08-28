@@ -16,8 +16,14 @@
 
 package handlers
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 func Test(c *gin.Context) {
-	c.String(200, "Hello world!")
+
+	members := c.RemoteIP()
+
+	c.JSON(200, members)
+
 }

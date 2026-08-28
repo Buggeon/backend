@@ -80,6 +80,27 @@ func (c *MessageService) DeleteMessage(cardID string, userID string) {
 func (c *MessageService) EditMessage() {
 
 }
-func (c *MessageService) GetMessages(cardID string) {
+
+func (c *MessageService) GetMessages(cardID string) ([]models.Message, error) {
+
+	objID, err := primitive.ObjectIDFromHex(cardID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return c.messageRepo.GetMessages(objID)
+
+}
+
+func (c *MessageService) GetMessage(messageID string) (models.Message, error) {
+
+	messageObjID, err := primitive.ObjectIDFromHex(messageID)
+
+	if err != nil {
+		return models.Message{}, nil
+	}
+
+	return c.messageRepo.GetMessage(messageObjID)
 
 }

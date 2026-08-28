@@ -17,10 +17,13 @@
 package services
 
 import (
+	s3storage "bugtracker/internal/S3Storage"
 	"bugtracker/internal/dto"
 	"bugtracker/internal/models"
 	"bugtracker/internal/repositories"
+	"context"
 	"fmt"
+	"mime/multipart"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -29,13 +32,20 @@ type ProjectService struct {
 	projectRepo   *repositories.ProjectRepo
 	memberRepo    *repositories.MemberRepo
 	memberService *MemberService
+	s3Storage     *s3storage.S3Storage
 }
 
-func NewProjectService(projectRepo *repositories.ProjectRepo, memberService *MemberService, memberRepo *repositories.MemberRepo) *ProjectService {
+func NewProjectService(
+	projectRepo *repositories.ProjectRepo,
+	memberService *MemberService,
+	memberRepo *repositories.MemberRepo,
+	s3Storage *s3storage.S3Storage,
+) *ProjectService {
 	return &ProjectService{
 		projectRepo:   projectRepo,
 		memberService: memberService,
 		memberRepo:    memberRepo,
+		s3Storage:     s3Storage,
 	}
 }
 
@@ -49,6 +59,7 @@ func (s *ProjectService) CreateProject(projectData *dto.CreateProjectDto) error 
 		Description: projectData.Description,
 		Members:     []primitive.ObjectID{},
 		Boards:      []primitive.ObjectID{},
+		Progress:    projectData.Progress,
 	}
 
 	if err := s.projectRepo.CreateProject(project); err != nil {
@@ -75,6 +86,8 @@ func (s *ProjectService) CreateProject(projectData *dto.CreateProjectDto) error 
 		}
 
 	}
+
+	s.SetProjectLogo(projectID.Hex(), projectData.Logo)
 
 	return nil
 
@@ -140,5 +153,31 @@ func (s *ProjectService) DeleteProject(projectID string) error {
 	}
 
 	return err
+
+}
+
+func (s *ProjectService) SetProjectLogo(projectID string, logo *multipart.FileHeader) error {
+
+	objID, err := primitive.ObjectIDFromHex(projectID)
+
+	if err != nil {
+		return err
+	}
+
+	src, err := logo.Open()
+
+	if err != nil {
+		return err
+	}
+
+	url, err := s.s3Storage.Upload(context.Background(), fmt.Sprintf("%s/logo/%s", projectID, logo.Filename), src, logo.Header.Get("Content-Type"))
+
+	if err != nil {
+		return err
+	}
+
+	s.projectRepo.SetProjectLogoUrl(objID, url)
+
+	return nil
 
 }

@@ -3,13 +3,13 @@
 package model
 
 type Board struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	Direction string   `json:"direction"`
-	CreatedAt string   `json:"createdAt"`
-	UpdatedAt string   `json:"updatedAt"`
-	Cards     []*Card  `json:"cards"`
-	Project   *Project `json:"project"`
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	Direction string  `json:"direction"`
+	CreatedAt string  `json:"createdAt"`
+	UpdatedAt string  `json:"updatedAt"`
+	ProjectID string  `json:"projectId"`
+	Cards     []*Card `json:"cards"`
 }
 
 type Card struct {
@@ -19,7 +19,7 @@ type Card struct {
 	Priority  int32      `json:"priority"`
 	CreatedAt string     `json:"createdAt"`
 	UpdatedAt string     `json:"updatedAt"`
-	Board     *Board     `json:"board"`
+	BoardID   string     `json:"boardId"`
 	Assigness []*Member  `json:"assigness"`
 	Messages  []*Message `json:"messages"`
 }
@@ -38,8 +38,8 @@ type Message struct {
 	Content   string     `json:"content"`
 	CreatedAt string     `json:"createdAt"`
 	UpdatedAt string     `json:"updatedAt"`
+	CardID    string     `json:"cardId"`
 	Sender    *Member    `json:"sender"`
-	Card      *Card      `json:"card"`
 	ReplyTo   *Message   `json:"replyTo,omitempty"`
 	Replies   []*Message `json:"replies"`
 }
@@ -55,7 +55,6 @@ type Project struct {
 	Lead        *Member   `json:"lead"`
 	Members     []*Member `json:"members"`
 	Boards      []*Board  `json:"boards"`
-	Cards       []*Card   `json:"cards"`
 }
 
 type Query struct {

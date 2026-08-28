@@ -19,7 +19,6 @@ type Project {
     lead: Member!
     members: [Member!]!
     boards: [Board!]!
-    cards: [Card!]!
 }
 
 type Message {
@@ -27,9 +26,8 @@ type Message {
     content: String!
     createdAt: String!
     updatedAt: String!
-
+    cardId: String!
     sender: Member!
-    card: Card!
     replyTo: Message
     replies: [Message!]!
 }
@@ -47,11 +45,11 @@ type Card {
     id: ID!
     title: String!
     content: String!
-    priority: Int!
+    priority: Int!  
     createdAt: String!
     updatedAt: String!
+    boardId: String!
 
-    board: Board!
     assigness: [Member!]!
     messages: [Message!]!
 }
@@ -62,17 +60,31 @@ type Board {
     direction: String!
     createdAt: String!
     updatedAt: String!
+    projectId: String!
 
     cards: [Card!]!
-    project: Project!
 }
 
 type Query {
     
-    project(id: ID!): Project
+    project(id: ID!): Project!
     
-    # Получить все проекты
     projects(userId: ID!): [Project!]!
     
+    message(id: ID!): Message!
+
+    messages(cardId: ID!): [Message!]!
+
+    board(id: ID!): Board!
+
+    boards(projectId: ID!): [Board!]!
     
+    card(id: ID!): Card!
+
+    cards(boardId: ID!): [Card!]!
+    
+    member(id: ID!): Member!
+
+    members(projectId: ID!): [Member!]!
+
 }

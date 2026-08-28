@@ -19,6 +19,7 @@ package main
 import (
 	"bugtracker/config"
 	"bugtracker/graph"
+	s3storage "bugtracker/internal/S3Storage"
 	"bugtracker/internal/db"
 	"bugtracker/internal/handlers"
 	"bugtracker/internal/middleware"
@@ -92,7 +93,7 @@ func createAdmin(tokenService *services.TokenService) error {
 }
 
 func main() {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		log.Fatal("Error while config loading")
 	}
 
@@ -141,6 +142,8 @@ func main() {
 	server := gin.Default()
 	server.Use(corsConfig)
 
+	s3Storage := s3storage.NewS3Storage()
+
 	userRepo := repositories.NewUserRepo()
 	projectRepo := repositories.NewProjectRepo()
 	memberRepo := repositories.NewMemberRepo()
@@ -151,7 +154,7 @@ func main() {
 	boardService := services.NewBoardService(boardRepo, projectRepo)
 	cardService := services.NewCardService(cardRepo, boardRepo)
 	memberService := services.NewMemberService(memberRepo, projectRepo)
-	projectService := services.NewProjectService(projectRepo, memberService, memberRepo)
+	projectService := services.NewProjectService(projectRepo, memberService, memberRepo, s3Storage)
 	tokenService := services.NewTokenService(config.LoadConfig())
 	userService := services.NewUserService(userRepo, tokenService)
 	systemService := services.NewSystemService(userRepo)
@@ -206,7 +209,7 @@ func setupRoutes(
 	server.POST("/auth/register", userHandler.Registration)
 	server.POST("/auth/login", userHandler.Login)
 	server.POST("/auth/refreshtoken", userHandler.RefreshAccessToken)
-	server.GET("/test", handlers.Test)
+	server.POST("/test", handlers.Test)
 
 	api := server.Group("/api")
 	api.Use(authMiddleware.AuthRequired())
@@ -217,6 +220,7 @@ func setupRoutes(
 			projects.GET("/:project_id", projectHandler.GetProject)
 			projects.POST("", projectHandler.CreateProject)
 			projects.DELETE("/:project_id", projectHandler.DeleteProject)
+			projects.PATCH("/:project_id/logo", projectHandler.SetProjectLogo)
 
 			members := projects.Group("/:project_id/members")
 			{

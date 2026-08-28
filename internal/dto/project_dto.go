@@ -16,11 +16,15 @@
 
 package dto
 
+import "mime/multipart"
+
 type CreateProjectDto struct {
-	LeadID      string      `json:"lead_id" binding:"required"`
-	Name        string      `json:"name" binding:"required"`
-	Description string      `json:"description"`
-	Members     []MemberDto `json:"members"`
+	LeadID      string                `json:"lead_id" binding:"required"`
+	Name        string                `json:"name" binding:"required"`
+	Description string                `json:"description"`
+	Members     []MemberDto           `json:"members"`
+	Progress    int                   `json:"progress"`
+	Logo        *multipart.FileHeader `json:"logo"`
 }
 
 type GetProjectDto struct {
