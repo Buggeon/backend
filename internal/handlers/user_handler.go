@@ -54,19 +54,19 @@ func (h *UserHandler) Registration(c *gin.Context) {
 	}
 
 	cookie := &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokenPair.RefreshToken,
-		MaxAge:   60 * 60 * 24 * 30,
-		Path:     "auth/refresh",
-		Domain:   "localhost",
-		Secure:   true,
+		Name:   "refreshToken",
+		Value:  tokenPair.RefreshToken,
+		MaxAge: 60 * 60 * 24 * 30,
+		Path:   "auth/refreshtoken",
+		Domain: "localhost",
+		//Secure:   true,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	}
 
 	http.SetCookie(c.Writer, cookie)
 
-	c.JSON(200, gin.H{"access_token": tokenPair.AccessToken})
+	c.JSON(200, gin.H{"accessToken": tokenPair.AccessToken})
 
 }
 
@@ -84,33 +84,61 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	if err != nil {
 
-		fmt.Println(err)
+		c.JSON(401, gin.H{"message": "Invalid credentials"})
 
-		c.Status(401)
 	} else {
-		c.JSON(200, response)
+		cookie := &http.Cookie{
+			Name:   "refreshToken",
+			Value:  response.RefreshToken,
+			MaxAge: 60 * 60 * 24 * 30,
+			Path:   "auth/refreshtoken",
+			Domain: "localhost",
+			//Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		}
+
+		http.SetCookie(c.Writer, cookie)
+
+		c.JSON(200, gin.H{"accessToken": response.AccessToken})
 	}
 
 }
 
 func (h *UserHandler) RefreshAccessToken(c *gin.Context) {
 
-	var dto dto.RefreshAccessTokenDto
+	fmt.Println("Начинаем обновление...")
 
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.Status(403)
-		c.Abort()
-		return
-	}
-
-	accessToken, err := h.userService.RefreshAccessToken(dto.RefreshToken)
+	refreshToken, err := c.Cookie("refreshToken")
 
 	if err != nil {
-
+		fmt.Println("Couldnt find refresh token from cookie")
 		c.Status(403)
 		c.Abort()
 		return
 	}
 
-	c.JSON(200, gin.H{"access_token": accessToken})
+	tokenPair, err := h.userService.RefreshAccessToken(refreshToken)
+
+	if err != nil {
+		fmt.Println(err)
+		c.Status(403)
+		c.Abort()
+		return
+	}
+
+	cookie := &http.Cookie{
+		Name:   "refreshToken",
+		Value:  tokenPair.RefreshToken,
+		MaxAge: 60 * 60 * 24 * 30,
+		Path:   "auth/refreshtoken",
+		Domain: "localhost",
+		//Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(c.Writer, cookie)
+
+	c.JSON(200, gin.H{"accessToken": tokenPair.AccessToken})
 }

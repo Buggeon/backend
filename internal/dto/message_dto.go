@@ -17,8 +17,8 @@
 package dto
 
 type NewMessageDto struct {
-	SenderID string `json:"sender_id"`
-	CardID   string `json:"card_id"`
-	ReplyTo  string `json:"reply_to"`
+	SenderID string `json:"senderId"`
+	CardID   string `json:"cardId"`
+	ReplyTo  string `json:"replyTo"`
 	Content  string `json:"content" binding:"required"`
 }

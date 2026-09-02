@@ -20,6 +20,7 @@ import (
 	"bugtracker/internal/db"
 	"bugtracker/internal/models"
 	"context"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -58,7 +59,7 @@ func (r *UserRepo) GetByRefreshToken(refreshToken string) (*models.User, error) 
 
 	var result models.User
 
-	err := r.collection.FindOne(context.TODO(), bson.M{"refresh_token": refreshToken}).Decode(&result)
+	err := r.collection.FindOne(context.TODO(), bson.M{"refresh_tokens": refreshToken}).Decode(&result)
 
 	return &result, err
 }
@@ -107,5 +108,36 @@ func (r *UserRepo) GetAllUsers() ([]models.User, error) {
 	}
 
 	return users, nil
+
+}
+
+func (r *UserRepo) UpdateRefreshToken(userID primitive.ObjectID, oldRefreshToken, newRefreshToken string) error {
+
+	filter := bson.M{"_id": userID}
+	pullUpdate := bson.M{"$pull": bson.M{"refresh_tokens": oldRefreshToken}}
+
+	_, err := r.collection.UpdateOne(context.TODO(), filter, pullUpdate)
+
+	if err != nil {
+		return err
+	}
+
+	pushUpdate := bson.M{"$push": bson.M{"refresh_tokens": newRefreshToken}}
+
+	_, err = r.collection.UpdateOne(context.TODO(), filter, pushUpdate)
+
+	return err
+}
+
+func (r *UserRepo) AddRefreshToken(userID primitive.ObjectID, refreshToken string) error {
+
+	fmt.Println("Start adding...")
+
+	filter := bson.M{"_id": userID}
+	update := bson.M{"$push": bson.M{"refresh_tokens": refreshToken}}
+
+	_, err := r.collection.UpdateOne(context.TODO(), filter, update)
+
+	return err
 
 }

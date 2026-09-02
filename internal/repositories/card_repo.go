@@ -101,3 +101,14 @@ func (r *CardRepo) AddMessage(cardID, messageID primitive.ObjectID) error {
 	return err
 
 }
+
+func (r *CardRepo) UpdateCardLocation(cardID, boardID primitive.ObjectID) error {
+
+	filter := bson.M{"_id": cardID}
+	update := bson.M{"$set": bson.M{"board_id": boardID}}
+
+	_, err := r.collection.UpdateOne(context.TODO(), filter, update)
+
+	return err
+
+}

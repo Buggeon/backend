@@ -38,6 +38,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func createAdmin(tokenService *services.TokenService) error {
@@ -67,6 +68,7 @@ func createAdmin(tokenService *services.TokenService) error {
 	if count == 0 {
 
 		admin := models.User{
+			ID:        primitive.NewObjectID(),
 			Name:      admin_name,
 			Login:     admin_login,
 			Password:  admin_password,
@@ -81,7 +83,7 @@ func createAdmin(tokenService *services.TokenService) error {
 			return err
 		}
 
-		admin.RefreshToken = refreshToken
+		admin.RefreshTokens = []string{refreshToken}
 
 		_, err = users.InsertOne(context.TODO(), admin)
 
@@ -111,7 +113,9 @@ func main() {
 	defer db.Close()
 
 	corsConfig := cors.New(cors.Config{
-		AllowAllOrigins: true,
+		AllowOrigins: []string{
+			"http://localhost:5173",
+		},
 		AllowMethods: []string{
 			"GET",
 			"POST",
@@ -150,17 +154,19 @@ func main() {
 	boardRepo := repositories.NewBoardRepo()
 	cardRepo := repositories.NewCardRepo()
 	messageRepo := repositories.NewMessageRepo()
+	schemaRepo := repositories.NewSchemaRepo()
 
 	boardService := services.NewBoardService(boardRepo, projectRepo)
 	cardService := services.NewCardService(cardRepo, boardRepo)
 	memberService := services.NewMemberService(memberRepo, projectRepo)
+	schemaService := services.NewSchemaService(projectRepo, schemaRepo, s3Storage)
 	projectService := services.NewProjectService(projectRepo, memberService, memberRepo, s3Storage)
 	tokenService := services.NewTokenService(config.LoadConfig())
 	userService := services.NewUserService(userRepo, tokenService)
 	systemService := services.NewSystemService(userRepo)
 	messageService := services.NewMessageService(messageRepo, cardRepo)
 
-	projectHandler := handlers.NewProjectHandler(projectService, cardService, boardService, memberService, messageService)
+	projectHandler := handlers.NewProjectHandler(projectService, schemaService, cardService, boardService, memberService, messageService)
 	userHandler := handlers.NewUserHandler(userService)
 	systemHandler := handlers.NewSystemHandler(systemService)
 
@@ -192,7 +198,7 @@ func main() {
 		port = "8080"
 	}
 	log.Printf("Server starting on :%s", port)
-	server.Run(":" + port)
+	server.Run("127.0.0.1:" + port)
 }
 
 func setupRoutes(
@@ -209,7 +215,7 @@ func setupRoutes(
 	server.POST("/auth/register", userHandler.Registration)
 	server.POST("/auth/login", userHandler.Login)
 	server.POST("/auth/refreshtoken", userHandler.RefreshAccessToken)
-	server.POST("/test", handlers.Test)
+	server.GET("/test", handlers.Test)
 
 	api := server.Group("/api")
 	api.Use(authMiddleware.AuthRequired())
@@ -220,7 +226,16 @@ func setupRoutes(
 			projects.GET("/:project_id", projectHandler.GetProject)
 			projects.POST("", projectHandler.CreateProject)
 			projects.DELETE("/:project_id", projectHandler.DeleteProject)
+			projects.POST("/:project_id/schemas", projectHandler.AddProjectSchema)
 			projects.PATCH("/:project_id/logo", projectHandler.SetProjectLogo)
+
+			schemas := projects.Group("/:project_id/schemas")
+			{
+				schemas.POST("", projectHandler.AddProjectSchema)
+				schemas.GET("/:_id", projectHandler.GetMember)
+				schemas.POST("", projectHandler.CreateMember)
+				schemas.DELETE("/:_id", projectHandler.DeleteMember)
+			}
 
 			members := projects.Group("/:project_id/members")
 			{
@@ -243,6 +258,7 @@ func setupRoutes(
 					cards.GET("/:card_id", projectHandler.GetCard)
 					cards.POST("", projectHandler.CreateCard)
 					cards.DELETE("/:card_id", projectHandler.DeleteCard)
+					cards.PUT("/:card_id/updatelocation", projectHandler.UpdateCardLocation)
 
 					messages := cards.Group("/:card_id/messages")
 					{

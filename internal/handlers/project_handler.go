@@ -20,13 +20,13 @@ import (
 	"bugtracker/internal/dto"
 	"bugtracker/internal/services"
 	"fmt"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type ProjectHandler struct {
 	projectService *services.ProjectService
+	schemaService  *services.SchemaService
 	boardService   *services.BoardService
 	cardService    *services.CardService
 	memberService  *services.MemberService
@@ -35,6 +35,7 @@ type ProjectHandler struct {
 
 func NewProjectHandler(
 	projectService *services.ProjectService,
+	schemaService *services.SchemaService,
 	cardService *services.CardService,
 	boardServices *services.BoardService,
 	memberService *services.MemberService,
@@ -43,6 +44,7 @@ func NewProjectHandler(
 	return &ProjectHandler{
 		projectService: projectService,
 		boardService:   boardServices,
+		schemaService:  schemaService,
 		cardService:    cardService,
 		memberService:  memberService,
 		messageService: messageService,
@@ -51,27 +53,18 @@ func NewProjectHandler(
 
 func (h *ProjectHandler) CreateProject(c *gin.Context) {
 
-	leadID := c.Request.FormValue("lead_id")
+	leadID := c.Request.FormValue("leadId")
 	name := c.Request.FormValue("name")
 	description := c.Request.FormValue("description")
 	//members := c.Request.FormValue("members")
 	logo, _ := c.FormFile("logo")
-	progress := c.Request.FormValue("progress")
 
-	progressInt, err := strconv.Atoi(progress)
-
-	if err != nil {
-		c.Status(403)
-		c.Abort()
-		return
-	}
-
-	err = h.projectService.CreateProject(&dto.CreateProjectDto{
+	err := h.projectService.CreateProject(&dto.CreateProjectDto{
 		LeadID:      leadID,
 		Name:        name,
 		Description: description,
 		Logo:        logo,
-		Progress:    progressInt,
+		Progress:    0,
 		//Members: string(membersJSON),
 	})
 
@@ -311,6 +304,31 @@ func (h *ProjectHandler) GetCards(c *gin.Context) {
 	}
 }
 
+func (h *ProjectHandler) UpdateCardLocation(c *gin.Context) {
+
+	type Body struct {
+		NewBoardId string
+	}
+
+	var body Body
+
+	oldBoardID := c.Param("board_id")
+	cardID := c.Param("card_id")
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.Status(400)
+		return
+	}
+
+	if err := h.cardService.UpdateCardLocation(cardID, oldBoardID, body.NewBoardId); err != nil {
+		fmt.Println(err)
+		c.Status(500)
+		return
+	}
+
+	c.Status(200)
+}
+
 func (h *ProjectHandler) CreateMember(c *gin.Context) {
 	var dto dto.CreateMemberDto
 
@@ -412,5 +430,32 @@ func (h *ProjectHandler) NewMessage(c *gin.Context) {
 	}
 
 	c.Status(201)
+
+}
+
+func (h *ProjectHandler) AddProjectSchema(c *gin.Context) {
+
+	type bodyContent struct {
+		schemaUrl string `binding:"required"`
+		direction string
+		name      string `binding:"required"`
+		authorId  string `binding:"required"`
+	}
+
+	var body bodyContent
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.Status(400)
+		return
+	}
+
+	projectID := c.Param("project_id")
+
+	err := h.schemaService.CreateSchema(projectID, body.direction, body.schemaUrl, body.name, body.authorId)
+
+	if err != nil {
+		c.Status(500)
+		return
+	}
 
 }

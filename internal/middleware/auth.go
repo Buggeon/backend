@@ -43,7 +43,7 @@ func (m *AuthMiddleware) AuthRequired() gin.HandlerFunc {
 		authHeader := ctx.GetHeader("Authorization")
 
 		if authHeader == "" {
-			ctx.Status(401)
+			ctx.JSON(401, gin.H{"message": "Invalid or empty accessToken"})
 			fmt.Println("Empty auth header")
 			ctx.Abort()
 			return
@@ -51,7 +51,7 @@ func (m *AuthMiddleware) AuthRequired() gin.HandlerFunc {
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			ctx.Status(401)
+			ctx.JSON(401, gin.H{"message": "Invalid or empty accessToken"})
 			fmt.Println("Incorrect auth header format")
 			ctx.Abort()
 			return
@@ -61,7 +61,7 @@ func (m *AuthMiddleware) AuthRequired() gin.HandlerFunc {
 		claims, err := m.tokenService.ValidateAccessToken(token)
 
 		if err != nil {
-			ctx.Status(401)
+			ctx.JSON(401, gin.H{"message": "Invalid or empty accessToken"})
 			fmt.Println("Invalid auth header")
 			ctx.Abort()
 			return

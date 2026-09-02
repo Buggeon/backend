@@ -12,6 +12,7 @@ require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/joho/godotenv v1.5.1
+	github.com/loveholidays/excalidraw-decrypt v0.6.0
 	github.com/vektah/gqlparser/v2 v2.5.36
 	go.mongodb.org/mongo-driver v1.17.9
 	golang.org/x/crypto v0.55.0
@@ -73,5 +74,6 @@ require (
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/tools v0.49.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )

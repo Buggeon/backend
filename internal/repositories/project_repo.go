@@ -136,3 +136,27 @@ func (r *ProjectRepo) SetProjectLogoUrl(projectID primitive.ObjectID, logoUrl st
 	return err
 
 }
+
+func (r *ProjectRepo) AddSchema(projectID primitive.ObjectID, schemaUrl string) error {
+
+	filter := bson.M{"_id": projectID}
+
+	update := bson.M{"$push": bson.M{"schemas": schemaUrl}}
+
+	_, err := r.collection.UpdateOne(context.TODO(), filter, update)
+
+	return err
+
+}
+
+func (r *ProjectRepo) GetSchemas(schemaID primitive.ObjectID) (models.Schema, error) {
+
+	filter := bson.M{"schemas": schemaID}
+
+	var schema models.Schema
+
+	err := r.collection.FindOne(context.Background(), filter).Decode(&schema)
+
+	return schema, err
+
+}

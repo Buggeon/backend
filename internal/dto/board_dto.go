@@ -19,17 +19,17 @@ package dto
 type CreateBoardDto struct {
 	Name      string `json:"name" binding:"required"`
 	Direction string `json:"direction" binding:"required"`
-	ProjectID string `json:"project_id"`
+	ProjectID string `json:"projectId"`
 }
 
 type GetBoardDto struct {
-	BoardID string `json:"board_id" binding:"required"`
+	BoardID string `json:"boardId" binding:"required"`
 }
 
 type GetBoardsDto struct {
-	ProjectID string `json:"project_id" binding:"required"`
+	ProjectID string `json:"projectId" binding:"required"`
 }
 
 type DeleteBoardDto struct {
-	BoardID string `json:"board_id" binding:"required"`
+	BoardID string `json:"boardId" binding:"required"`
 }

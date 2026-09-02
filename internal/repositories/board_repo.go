@@ -101,3 +101,14 @@ func (r *BoardRepo) AddCard(boardID, cardID primitive.ObjectID) error {
 	return err
 
 }
+
+func (r *BoardRepo) DeleteCard(boardID, cardID primitive.ObjectID) error {
+
+	filter := bson.M{"_id": boardID}
+	update := bson.M{"$pull": bson.M{"cards": cardID}}
+
+	_, err := r.collection.UpdateOne(context.TODO(), filter, update)
+
+	return err
+
+}

@@ -128,35 +128,35 @@ func (s *TokenService) ValidateRefreshToken(refreshToken string) (*TokenClaims, 
 
 }
 
-func (s *TokenService) RefreshAccessToken(refreshToken string, user *models.User) (string, error) {
+func (s *TokenService) RefreshAccessToken(refreshToken string, user *models.User) (models.TokenResponse, error) {
 
 	_, err := s.ValidateRefreshToken(refreshToken)
 
 	if err != nil {
-		return "", errors.New("Invalid token")
+		return models.TokenResponse{}, errors.New("Invalid token")
 	}
 
-	return s.GenerateAccessToken(user)
+	return s.GenerateTokensPair(user)
 
 }
 
-func (s *TokenService) GenerateTokensPair(user *models.User) (models.TokenReponse, error) {
+func (s *TokenService) GenerateTokensPair(user *models.User) (models.TokenResponse, error) {
 
 	accessToken, err := s.GenerateAccessToken(user)
 
 	fmt.Println(err)
 
 	if err != nil {
-		return models.TokenReponse{}, nil
+		return models.TokenResponse{}, nil
 	}
 
 	refreshToken, err := s.GenerateRefreshToken(user)
 
 	if err != nil {
-		return models.TokenReponse{}, nil
+		return models.TokenResponse{}, nil
 	}
 
-	return models.TokenReponse{
+	return models.TokenResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		TokenType:    "Bearer",

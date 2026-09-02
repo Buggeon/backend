@@ -131,6 +131,36 @@ func (r *queryResolver) Message(ctx context.Context, messageID string) (*model.M
 
 }
 
+func (r *Resolver) Schema(ctx context.Context, u *models.Schema) *model.Schema {
+
+	schema, err := r.SchemaService.GetSchema(u.ID.Hex())
+
+	if err != nil {
+		return &model.Schema{}
+	}
+
+	return r.toGraphQLSchema(ctx, &schema)
+}
+
+func (r *Resolver) Schemas(ctx context.Context, projectID string) ([]*model.Schema, error) {
+
+	schemas, err := r.SchemaService.GetSchemas(projectID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.Schema, len(schemas))
+
+	for i, c := range schemas {
+
+		result[i] = r.toGraphQLSchema(context.Background(), &c)
+
+	}
+
+	return result, nil
+}
+
 func (r *queryResolver) Messages(ctx context.Context, cardID string) ([]*model.Message, error) {
 
 	messages, err := r.MessageService.GetMessages(cardID)
@@ -352,11 +382,11 @@ func (r *Resolver) toGraphQLCard(ctx context.Context, c *models.Card) *model.Car
 		ID:        c.ID.Hex(),
 		Title:     c.Title,
 		Content:   c.Content,
-		Priority:  int32(c.Priority),
+		Priority:  c.Priority,
 		CreatedAt: c.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: c.UpdatedAt.Format(time.RFC3339),
 		BoardID:   c.BoardID.Hex(),
-		Assigness: assignees,
+		Assignees: assignees,
 		Messages:  messages,
 	}
 }
@@ -393,4 +423,30 @@ func (r *Resolver) toGraphQLMessage(ctx context.Context, m *models.Message) *mod
 		CreatedAt: m.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: m.UpdatedAt.Format(time.RFC3339),
 	}
+}
+
+func (r *Resolver) toGraphQLSchema(ctx context.Context, s *models.Schema) *model.Schema {
+
+	if s == nil {
+		return &model.Schema{}
+	}
+
+	member, err := r.MemberService.GetMember(s.AuthorID.Hex())
+
+	if err != nil {
+		return &model.Schema{}
+	}
+
+	graphMember := r.toGraphQLMember(ctx, &member)
+
+	return &model.Schema{
+		ID:        s.ID.Hex(),
+		Direction: &s.Direction,
+		URL:       s.Url,
+		Name:      s.Name,
+		Author:    graphMember,
+		CreatedAt: s.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: s.UpdatedAt.Format(time.RFC3339),
+	}
+
 }

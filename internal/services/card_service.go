@@ -110,3 +110,35 @@ func (c *CardService) GetCards(boardID string) ([]models.Card, error) {
 func (c *CardService) CloseCard() {
 
 }
+
+func (c *CardService) UpdateCardLocation(cardID, oldBoardID, newBoardID string) error {
+
+	cardObjID, err := primitive.ObjectIDFromHex(cardID)
+
+	if err != nil {
+		return err
+	}
+
+	oldBoardObjID, err := primitive.ObjectIDFromHex(oldBoardID)
+
+	if err != nil {
+		return err
+	}
+
+	newBoardObjID, err := primitive.ObjectIDFromHex(newBoardID)
+
+	if err != nil {
+		return err
+	}
+
+	if err := c.boardRepo.DeleteCard(oldBoardObjID, cardObjID); err != nil {
+		return err
+	}
+
+	if err := c.boardRepo.AddCard(newBoardObjID, cardObjID); err != nil {
+		return err
+	}
+
+	return c.cardRepo.UpdateCardLocation(cardObjID, newBoardObjID)
+
+}

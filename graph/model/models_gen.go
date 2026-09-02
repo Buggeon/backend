@@ -16,11 +16,11 @@ type Card struct {
 	ID        string     `json:"id"`
 	Title     string     `json:"title"`
 	Content   string     `json:"content"`
-	Priority  int32      `json:"priority"`
+	Priority  string     `json:"priority"`
 	CreatedAt string     `json:"createdAt"`
 	UpdatedAt string     `json:"updatedAt"`
 	BoardID   string     `json:"boardId"`
-	Assigness []*Member  `json:"assigness"`
+	Assignees []*Member  `json:"assignees"`
 	Messages  []*Message `json:"messages"`
 }
 
@@ -58,6 +58,16 @@ type Project struct {
 }
 
 type Query struct {
+}
+
+type Schema struct {
+	ID        string  `json:"id"`
+	Direction *string `json:"direction,omitempty"`
+	URL       string  `json:"url"`
+	Name      string  `json:"name"`
+	Author    *Member `json:"author"`
+	CreatedAt string  `json:"createdAt"`
+	UpdatedAt string  `json:"updatedAt"`
 }
 
 type User struct {

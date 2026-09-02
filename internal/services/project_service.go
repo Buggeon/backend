@@ -59,6 +59,7 @@ func (s *ProjectService) CreateProject(projectData *dto.CreateProjectDto) error 
 		Description: projectData.Description,
 		Members:     []primitive.ObjectID{},
 		Boards:      []primitive.ObjectID{},
+		Schemas:     []string{},
 		Progress:    projectData.Progress,
 	}
 
@@ -170,7 +171,7 @@ func (s *ProjectService) SetProjectLogo(projectID string, logo *multipart.FileHe
 		return err
 	}
 
-	url, err := s.s3Storage.Upload(context.Background(), fmt.Sprintf("%s/logo/%s", projectID, logo.Filename), src, logo.Header.Get("Content-Type"))
+	url, err := s.s3Storage.Upload(context.Background(), fmt.Sprintf("projects/%s/logo/%s", projectID, logo.Filename), src, logo.Header.Get("Content-Type"))
 
 	if err != nil {
 		return err

@@ -37,12 +37,12 @@ func NewUserService(userRepo *repositories.UserRepo, tokenService *TokenService)
 	}
 }
 
-func (u *UserService) Register(dto *dto.UserRegistrationDto) (models.TokenReponse, error) {
+func (u *UserService) Register(dto *dto.UserRegistrationDto) (models.TokenResponse, error) {
 
 	passwordHash, err := security.HashPassword(dto.Password)
 
 	if err != nil {
-		return models.TokenReponse{}, err
+		return models.TokenResponse{}, err
 	}
 
 	user := &models.User{
@@ -56,10 +56,10 @@ func (u *UserService) Register(dto *dto.UserRegistrationDto) (models.TokenRepons
 	tokenPair, err := u.tokenService.GenerateTokensPair(user)
 
 	if err != nil {
-		return models.TokenReponse{}, err
+		return models.TokenResponse{}, err
 	}
 
-	user.RefreshToken = tokenPair.RefreshToken
+	user.RefreshTokens = []string{tokenPair.RefreshToken}
 
 	u.userRepo.Create(user)
 
@@ -67,49 +67,49 @@ func (u *UserService) Register(dto *dto.UserRegistrationDto) (models.TokenRepons
 
 }
 
-func (u *UserService) Login(dto *dto.UserLoginDto) (models.TokenReponse, error) {
-
-	fmt.Println("Start login...")
+func (u *UserService) Login(dto *dto.UserLoginDto) (models.TokenResponse, error) {
 
 	user, err := u.userRepo.GetByLogin(dto.Login)
 
-	fmt.Println("Got user")
-
 	if err != nil {
-		return models.TokenReponse{}, err
+		return models.TokenResponse{}, err
 	}
 
 	verificationResult, _ := security.VerifyPassword(dto.Password, user.Password)
-
-	fmt.Println("Verification result: ", verificationResult)
 
 	if verificationResult == true {
 
 		tokensPair, err := u.tokenService.GenerateTokensPair(user)
 
 		if err != nil {
-			return models.TokenReponse{}, err
+			return models.TokenResponse{}, err
 		}
 
-		return tokensPair, nil
+		return tokensPair, u.userRepo.AddRefreshToken(user.ID, tokensPair.RefreshToken)
 
 	}
 
-	return models.TokenReponse{}, errors.New("Unathorized")
+	return models.TokenResponse{}, errors.New("Unathorized")
 
 }
 
-func (u *UserService) RefreshAccessToken(refreshToken string) (string, error) {
+func (u *UserService) RefreshAccessToken(refreshToken string) (models.TokenResponse, error) {
+
+	fmt.Println("Refresh token: " + refreshToken)
 
 	user, err := u.userRepo.GetByRefreshToken(refreshToken)
 
 	if err != nil {
-		return "", err
+		return models.TokenResponse{}, err
 	}
 
-	accessToken, err := u.tokenService.RefreshAccessToken(refreshToken, user)
+	tokenPair, err := u.tokenService.RefreshAccessToken(refreshToken, user)
 
-	return accessToken, err
+	if err != nil {
+		return models.TokenResponse{}, err
+	}
+
+	return tokenPair, u.userRepo.UpdateRefreshToken(user.ID, refreshToken, tokenPair.RefreshToken)
 
 }
 

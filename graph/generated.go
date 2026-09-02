@@ -47,7 +47,7 @@ type ComplexityRoot struct {
 	}
 
 	Card struct {
-		Assigness func(childComplexity int) int
+		Assignees func(childComplexity int) int
 		BoardID   func(childComplexity int) int
 		Content   func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
@@ -95,13 +95,23 @@ type ComplexityRoot struct {
 		Board    func(childComplexity int, id string) int
 		Boards   func(childComplexity int, projectID string) int
 		Card     func(childComplexity int, id string) int
-		Cards    func(childComplexity int, boarID string) int
+		Cards    func(childComplexity int, boardID string) int
 		Member   func(childComplexity int, id string) int
 		Members  func(childComplexity int, projectID string) int
 		Message  func(childComplexity int, id string) int
 		Messages func(childComplexity int, cardID string) int
 		Project  func(childComplexity int, id string) int
 		Projects func(childComplexity int, userID string) int
+	}
+
+	Schema struct {
+		Author    func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		Direction func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+		URL       func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
 	}
 
 	User struct {
@@ -126,7 +136,7 @@ type QueryResolver interface {
 	Board(ctx context.Context, id string) (*model.Board, error)
 	Boards(ctx context.Context, projectID string) ([]*model.Board, error)
 	Card(ctx context.Context, id string) (*model.Card, error)
-	Cards(ctx context.Context, boarID string) ([]*model.Card, error)
+	Cards(ctx context.Context, boardID string) ([]*model.Card, error)
 	Member(ctx context.Context, id string) (*model.Member, error)
 	Members(ctx context.Context, projectID string) ([]*model.Member, error)
 }
@@ -192,12 +202,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Board.UpdatedAt(childComplexity), true
 
-	case "Card.assigness":
-		if e.ComplexityRoot.Card.Assigness == nil {
+	case "Card.assignees":
+		if e.ComplexityRoot.Card.Assignees == nil {
 			break
 		}
 
-		return e.ComplexityRoot.Card.Assigness(childComplexity), true
+		return e.ComplexityRoot.Card.Assignees(childComplexity), true
 	case "Card.boardId":
 		if e.ComplexityRoot.Card.BoardID == nil {
 			break
@@ -437,7 +447,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.Cards(childComplexity, args["boarId"].(string)), true
+		return e.ComplexityRoot.Query.Cards(childComplexity, args["boardId"].(string)), true
 
 	case "Query.member":
 		if e.ComplexityRoot.Query.Member == nil {
@@ -505,6 +515,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Projects(childComplexity, args["userId"].(string)), true
+
+	case "Schema.author":
+		if e.ComplexityRoot.Schema.Author == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Schema.Author(childComplexity), true
+	case "Schema.createdAt":
+		if e.ComplexityRoot.Schema.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Schema.CreatedAt(childComplexity), true
+	case "Schema.direction":
+		if e.ComplexityRoot.Schema.Direction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Schema.Direction(childComplexity), true
+	case "Schema.id":
+		if e.ComplexityRoot.Schema.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Schema.ID(childComplexity), true
+	case "Schema.name":
+		if e.ComplexityRoot.Schema.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Schema.Name(childComplexity), true
+	case "Schema.url":
+		if e.ComplexityRoot.Schema.URL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Schema.URL(childComplexity), true
+	case "Schema.updatedAt":
+		if e.ComplexityRoot.Schema.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Schema.UpdatedAt(childComplexity), true
 
 	case "User.createdAt":
 		if e.ComplexityRoot.User.CreatedAt == nil {
@@ -665,8 +718,8 @@ func (ec *executionContext) childFields_Card(ctx context.Context, field graphql.
 		return ec.fieldContext_Card_updatedAt(ctx, field)
 	case "boardId":
 		return ec.fieldContext_Card_boardId(ctx, field)
-	case "assigness":
-		return ec.fieldContext_Card_assigness(ctx, field)
+	case "assignees":
+		return ec.fieldContext_Card_assignees(ctx, field)
 	case "messages":
 		return ec.fieldContext_Card_messages(ctx, field)
 	}
@@ -932,14 +985,14 @@ func (ec *executionContext) field_Query_card_args(ctx context.Context, rawArgs m
 func (ec *executionContext) field_Query_cards_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "boarId",
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "boardId",
 		func(ctx context.Context, v any) (string, error) {
 			return ec.unmarshalNID2string(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["boarId"] = arg0
+	args["boardId"] = arg0
 	return args, nil
 }
 
@@ -1338,15 +1391,15 @@ func (ec *executionContext) _Card_priority(ctx context.Context, field graphql.Co
 			return obj.Priority, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
-			return ec.marshalNInt2int32(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
 func (ec *executionContext) fieldContext_Card_priority(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Card", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("Card", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Card_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
@@ -1418,16 +1471,16 @@ func (ec *executionContext) fieldContext_Card_boardId(_ context.Context, field g
 	return graphql.NewScalarFieldContext("Card", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _Card_assigness(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
+func (ec *executionContext) _Card_assignees(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_Card_assigness(ctx, field)
+			return ec.fieldContext_Card_assignees(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.Assigness, nil
+			return obj.Assignees, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*model.Member) graphql.Marshaler {
@@ -1437,7 +1490,7 @@ func (ec *executionContext) _Card_assigness(ctx context.Context, field graphql.C
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_Card_assigness(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Card_assignees(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Card",
 		Field:      field,
@@ -2415,7 +2468,7 @@ func (ec *executionContext) _Query_cards(ctx context.Context, field graphql.Coll
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().Cards(ctx, fc.Args["boarId"].(string))
+			return ec.Resolvers.Query().Cards(ctx, fc.Args["boardId"].(string))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*model.Card) graphql.Marshaler {
@@ -2611,6 +2664,176 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _Schema_id(ctx context.Context, field graphql.CollectedField, obj *model.Schema) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Schema_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Schema_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Schema", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Schema_direction(ctx context.Context, field graphql.CollectedField, obj *model.Schema) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Schema_direction(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Direction, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Schema_direction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Schema", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Schema_url(ctx context.Context, field graphql.CollectedField, obj *model.Schema) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Schema_url(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.URL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Schema_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Schema", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Schema_name(ctx context.Context, field graphql.CollectedField, obj *model.Schema) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Schema_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Schema_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Schema", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Schema_author(ctx context.Context, field graphql.CollectedField, obj *model.Schema) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Schema_author(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Author, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Member) graphql.Marshaler {
+			return ec.marshalNMember2ᚖbugtrackerᚋgraphᚋmodelᚐMember(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Schema_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Schema",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Member(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Schema_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Schema) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Schema_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Schema_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Schema", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Schema_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Schema) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Schema_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Schema_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Schema", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -3933,8 +4156,8 @@ func (ec *executionContext) _Card(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "assigness":
-			out.Values[i] = ec._Card_assigness(ctx, field, obj)
+		case "assignees":
+			out.Values[i] = ec._Card_assignees(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -4436,6 +4659,74 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			})
 			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var schemaImplementors = []string{"Schema"}
+
+func (ec *executionContext) _Schema(ctx context.Context, sel ast.SelectionSet, obj *model.Schema) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, schemaImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Schema")
+		case "id":
+			out.Values[i] = ec._Schema_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "direction":
+			out.Values[i] = ec._Schema_direction(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "url":
+			out.Values[i] = ec._Schema_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Schema_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "author":
+			out.Values[i] = ec._Schema_author(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._Schema_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Schema_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -5128,7 +5419,8 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 }
 
 func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
-	vSlice := graphql.CoerceList(v)
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]string, len(vSlice))
 	for i := range vSlice {
@@ -5203,7 +5495,8 @@ func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Conte
 }
 
 func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
-	vSlice := graphql.CoerceList(v)
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]string, len(vSlice))
 	for i := range vSlice {

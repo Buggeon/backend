@@ -17,13 +17,95 @@
 package handlers
 
 import (
+	"encoding/json"
+	"strings"
+
 	"github.com/gin-gonic/gin"
+	"github.com/loveholidays/excalidraw-decrypt/pkg/excalidrawdecrypt"
 )
+
+type ExcalidrawData struct {
+	Type     string    `json:"type"`
+	Version  int       `json:"version"`
+	Source   string    `json:"source"`
+	Elements []Element `json:"elements"`
+	AppState AppState  `json:"appState"`
+}
+
+type Element struct {
+	ID              string        `json:"id"`
+	Type            string        `json:"type"`
+	X               float64       `json:"x"`
+	Y               float64       `json:"y"`
+	Width           float64       `json:"width"`
+	Height          float64       `json:"height"`
+	Angle           float64       `json:"angle"`
+	StrokeColor     string        `json:"strokeColor"`
+	BackgroundColor string        `json:"backgroundColor"`
+	FillStyle       string        `json:"fillStyle"`
+	StrokeWidth     int           `json:"strokeWidth"`
+	StrokeStyle     string        `json:"strokeStyle"`
+	Roughness       int           `json:"roughness"`
+	Opacity         int           `json:"opacity"`
+	GroupIds        []string      `json:"groupIds"`
+	FrameId         *string       `json:"frameId"`
+	Index           string        `json:"index"`
+	Roundness       interface{}   `json:"roundness"`
+	Seed            int64         `json:"seed"`
+	Version         int64         `json:"version"`
+	VersionNonce    int64         `json:"versionNonce"`
+	IsDeleted       bool          `json:"isDeleted"`
+	BoundElements   []interface{} `json:"boundElements"`
+	Updated         int64         `json:"updated"`
+	Link            *string       `json:"link"`
+	Locked          bool          `json:"locked"`
+	Text            string        `json:"text,omitempty"`
+	FontSize        float64       `json:"fontSize,omitempty"`
+	FontFamily      int           `json:"fontFamily,omitempty"`
+	TextAlign       string        `json:"textAlign,omitempty"`
+	VerticalAlign   string        `json:"verticalAlign,omitempty"`
+	ContainerId     *string       `json:"containerId"`
+	OriginalText    string        `json:"originalText,omitempty"`
+	AutoResize      bool          `json:"autoResize,omitempty"`
+	LineHeight      float64       `json:"lineHeight,omitempty"`
+	Points          [][]float64   `json:"points,omitempty"`
+	StartBinding    interface{}   `json:"startBinding"`
+	EndBinding      interface{}   `json:"endBinding"`
+	StartArrowhead  *string       `json:"startArrowhead"`
+	EndArrowhead    *string       `json:"endArrowhead"`
+	Polygon         bool          `json:"polygon"`
+}
+
+type AppState struct {
+	GridSize              int                    `json:"gridSize"`
+	GridStep              int                    `json:"gridStep"`
+	GridModeEnabled       bool                   `json:"gridModeEnabled"`
+	ViewBackgroundColor   string                 `json:"viewBackgroundColor"`
+	LockedMultiSelections map[string]interface{} `json:"lockedMultiSelections"`
+}
 
 func Test(c *gin.Context) {
 
-	members := c.RemoteIP()
+	var data ExcalidrawData
 
-	c.JSON(200, members)
+	shareableID := strings.Split("https://excalidraw.com/#json=4yfVrTy-LjzKWXlYv_tzx,Q3KWdNpRoSRGHS-TW0FL-Q", "json=")[1]
+
+	decrypter := excalidrawdecrypt.CreateShareableExcalidrawDecrypter()
+
+	plaintext, err := decrypter.Decrypt(shareableID)
+
+	if err != nil {
+		c.Status(500)
+		return
+	}
+
+	err = json.Unmarshal([]byte(plaintext), &data)
+
+	if err != nil {
+		c.Status(500)
+		return
+	}
+
+	c.JSON(200, data)
 
 }

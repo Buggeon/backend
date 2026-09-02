@@ -4,6 +4,7 @@ import "bugtracker/internal/services"
 
 type Resolver struct {
 	ProjectService *services.ProjectService
+	SchemaService  *services.SchemaService
 	BoardService   *services.BoardService
 	CardService    *services.CardService
 	MemberService  *services.MemberService

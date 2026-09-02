@@ -29,6 +29,7 @@ type Project struct {
 	LeadID      primitive.ObjectID   `bson:"lead_id" json:"lead_id"`
 	Name        string               `bson:"name" json:"name"`
 	Description string               `bson:"description" json:"description"`
+	Schemas     []string             `bson:"schemas" json:"schemas"`
 	Members     []primitive.ObjectID `bson:"members" json:"members"`
 	Boards      []primitive.ObjectID `bson:"boards" json:"boards"`
 	LogoUrl     string               `bson:"logo_url" json:"logo_url"`

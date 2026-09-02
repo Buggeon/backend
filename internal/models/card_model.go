@@ -28,7 +28,8 @@ type Card struct {
 	Content   string               `bson:"content" json:"content"`
 	Assignees []primitive.ObjectID `bson:"assignees" json:"assignees"`
 	BoardID   primitive.ObjectID   `bson:"board_id" json:"board_id"`
-	Priority  int                  `bson:"priority" json:"priority"`
+	Priority  string               `bson:"priority" json:"priority"`
+	Status    string               `bson:"status" json:"status"`
 	CreatedAt time.Time            `bson:"created_at" json:"created_at"`
 	Messages  []primitive.ObjectID `bson:"messages" json:"messages"`
 	UpdatedAt time.Time            `bson:"updated_at" json:"updated_at"`

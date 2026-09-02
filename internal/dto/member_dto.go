@@ -17,26 +17,27 @@
 package dto
 
 type CreateMemberDto struct {
-	ProjectID  string   `json:"project_id"`
-	UserID     string   `json:"user_id" binding:"required"`
+	ProjectID  string   `json:"projectId"`
+	UserID     string   `json:"userId" binding:"required"`
 	Role       string   `json:"role" binding:"required"`
+	Rights     []string `json:"rights" binding:"required"`
 	Directions []string `json:"directions" binding:"required"`
 }
 
 type MemberDto struct {
-	UserID     string   `json:"user_id" binding:"required"`
+	UserID     string   `json:"userId" binding:"required"`
 	Role       string   `json:"role" binding:"required"`
 	Directions []string `json:"directions" binding:"required"`
 }
 
 type GetMemberDto struct {
-	MemberID string `json:"member_id" binding:"required"`
+	MemberID string `json:"memberId" binding:"required"`
 }
 
 type DeleteMemberDto struct {
-	MemberID string `json:"member_id" binding:"required"`
+	MemberID string `json:"memberId" binding:"required"`
 }
 
 type GetMembersDto struct {
-	ProjectID string `json:"project_id" binding:"required"`
+	ProjectID string `json:"projectId" binding:"required"`
 }
